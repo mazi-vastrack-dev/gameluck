@@ -177,9 +177,29 @@ async function kick() {
     const gk = document.getElementById('goalkeeper');
     gk.classList.add('diving');
 
-    // Animate ball
+    // Animate ball in the chosen direction
     const ball = document.getElementById('ball');
-    ball.classList.add('animating');
+    ball.style.animation = 'none';
+    
+    // Determine animation based on chosen direction
+    const directionMap = {
+        'TL': 'kickBallTopLeft',
+        'TC': 'kickBallTopCenter',
+        'TR': 'kickBallTopRight',
+        'ML': 'kickBallMidLeft',
+        'MC': 'kickBallMidCenter',
+        'MR': 'kickBallMidRight',
+        'BL': 'kickBallBottomLeft',
+        'BC': 'kickBallBottomCenter',
+        'BR': 'kickBallBottomRight'
+    };
+    
+    const animationName = directionMap[gameState.chosenDirection] || 'kickBall';
+    
+    // Trigger animation
+    setTimeout(() => {
+        ball.style.animation = `${animationName} 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards`;
+    }, 10);
 
     audioSystem.playClickSound();
 
@@ -211,11 +231,13 @@ function showResult(won) {
     if (won) {
         resultIcon.textContent = '✅⚽🎉';
         resultText.textContent = 'GOAL! You predicted correctly!';
-        resultDetails.textContent = `You chose ${DIRECTIONS[gameState.selectedDirection].name}`;
+        resultDetails.textContent = `You chose ${DIRECTIONS[gameState.selectedDirection].name} and hit! Amazing! 🌟`;
     } else {
-        resultIcon.textContent = '❌';
-        resultText.textContent = 'Miss! The goalkeeper saved it!';
-        resultDetails.textContent = `You chose ${DIRECTIONS[gameState.selectedDirection].name}, but the ball went to ${DIRECTIONS[gameState.chosenDirection].name}`;
+        resultIcon.textContent = '❌⚽💨';
+        const userChose = DIRECTIONS[gameState.selectedDirection].name;
+        const ballWent = DIRECTIONS[gameState.chosenDirection].name;
+        resultText.textContent = `Wrong Direction!`;
+        resultDetails.textContent = `You predicted ${userChose}, but the ball went to ${ballWent}! Better luck next time! 💪`;
     }
 
     resultContainer.style.display = 'flex';
@@ -236,7 +258,8 @@ function resetGame() {
     gk.classList.remove('diving');
 
     const ball = document.getElementById('ball');
-    ball.classList.remove('animating');
+    ball.style.animation = 'none';
+    ball.style.transform = 'translateX(-50%) rotateX(20deg) rotateY(20deg)';
 
     createDirectionButtons();
 }
