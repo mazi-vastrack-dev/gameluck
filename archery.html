@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏹 Archery</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; }
+        .container { background: white; border-radius: 20px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 600px; text-align: center; }
+        h1 { color: #333; margin-bottom: 20px; }
+        .game-area { margin: 30px 0; }
+        .target { width: 250px; height: 250px; margin: 0 auto 30px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #FFD700, #FFA500, #FF6347); border: 5px solid #333; position: relative; }
+        .zone { position: absolute; border: 2px dashed rgba(0,0,0,0.3); border-radius: 50%; }
+        .zone.left { width: 150px; height: 150px; left: 0; top: 50%; transform: translateY(-50%); }
+        .zone.center { width: 100px; height: 100px; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+        .zone.right { width: 150px; height: 150px; right: 0; top: 50%; transform: translateY(-50%); }
+        .stats { display: flex; justify-content: space-around; margin-bottom: 30px; }
+        .stat { background: #f0f0f0; padding: 15px; border-radius: 8px; flex: 1; margin: 0 10px; }
+        .stat-label { display: block; font-size: 14px; color: #666; }
+        .stat-value { display: block; font-size: 28px; font-weight: bold; color: #333; }
+        .buttons { margin-top: 20px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        button { background: #667eea; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; cursor: pointer; margin: 5px; }
+        button:hover { background: #764ba2; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        button.zone-btn { background: #FF6347; }
+        button.zone-btn:hover { background: #E74C3C; }
+        #targetCanvas { border: 3px solid #667eea; border-radius: 10px; }
+        .result { margin-top: 15px; padding: 15px; border-radius: 8px; font-weight: bold; display: none; }
+        .result.hit { background: #C8E6C9; color: #2E7D32; }
+        .result.miss { background: #FFCDD2; color: #C62828; }
+        .difficulty-selector { margin: 20px 0; }
+        .difficulty-selector select { padding: 10px 15px; border: 2px solid #667eea; border-radius: 8px; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏹 Archery Prediction</h1>
+        <p>Predict which zone the arrow will land in!</p>
+        
+        <div class="stats">
+            <div class="stat">
+                <span class="stat-label">Shots</span>
+                <span class="stat-value" id="attempts">0</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Hits</span>
+                <span class="stat-value" id="hits">0</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Accuracy</span>
+                <span class="stat-value" id="accuracy">0%</span>
+            </div>
+        </div>
+
+        <div class="difficulty-selector">
+            <label>Difficulty:</label>
+            <select id="difficultySelect">
+                <option value="easy">🟢 Easy (70% accuracy)</option>
+                <option value="normal" selected>🟡 Normal (50% accuracy)</option>
+                <option value="hard">🔴 Hard (30% accuracy)</option>
+            </select>
+        </div>
+
+        <div class="game-area">
+            <canvas id="targetCanvas" width="280" height="280"></canvas>
+        </div>
+
+        <div class="buttons">
+            <button id="shootBtn" onclick="shoot()">🏹 Shoot</button>
+            <button id="leftBtn" class="zone-btn" onclick="selectZone('left')">⬅️ Left</button>
+            <button id="centerBtn" class="zone-btn" onclick="selectZone('center')">⬆️ Center</button>
+            <button id="rightBtn" class="zone-btn" onclick="selectZone('right')">➡️ Right</button>
+        </div>
+
+        <div class="result" id="result"></div>
+
+        <div class="buttons" style="margin-top: 30px;">
+            <button onclick="location.href='menu.html'">Back to Menu</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('targetCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let gameState = {
+            selectedZone: null,
+            attempts: 0,
+            hits: 0,
+            shooting: false,
+            difficulty: 'normal'
+        };
+
+        const difficultyConfig = {
+            easy: { accuracy: 0.70, speed: 1 },
+            normal: { accuracy: 0.50, speed: 1.5 },
+            hard: { accuracy: 0.30, speed: 2 }
+        };
+
+        function drawTarget() {
+            ctx.fillStyle = '#f0f0f0';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Outer circle (Red)
+            ctx.fillStyle = '#FF4444';
+            ctx.beginPath();
+            ctx.arc(canvas.width / 2, canvas.height / 2, 130, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Middle circle (Yellow)
+            ctx.fillStyle = '#FFDD44';
+            ctx.beginPath();
+            ctx.arc(canvas.width / 2, canvas.height / 2, 90, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Center (Gold)
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(canvas.width / 2, canvas.height / 2, 50, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Bullseye
+            ctx.fillStyle = '#FF0000';
+            ctx.beginPath();
+            ctx.arc(canvas.width / 2, canvas.height / 2, 15, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(canvas.width / 2, canvas.height / 2, 5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function selectZone(zone) {
+            gameState.selectedZone = zone;
+            document.querySelectorAll('.zone-btn').forEach(btn => btn.style.opacity = '0.5');
+            event.target.style.opacity = '1';
+        }
+
+        function shoot() {
+            if (!gameState.selectedZone || gameState.shooting) return;
+            
+            gameState.shooting = true;
+            gameState.attempts++;
+            document.getElementById('attempts').textContent = gameState.attempts;
+            
+            const config = difficultyConfig[gameState.difficulty];
+            const zones = ['left', 'center', 'right'];
+            let arrowZone;
+            
+            // Arrow lands based on difficulty - if lucky, lands on selection
+            if (Math.random() < config.accuracy) {
+                arrowZone = gameState.selectedZone;
+            } else {
+                const otherZones = zones.filter(z => z !== gameState.selectedZone);
+                arrowZone = otherZones[Math.floor(Math.random() * otherZones.length)];
+            }
+
+            const distance = arrowDistanceMap[arrowZone];
+            const startY = canvas.height / 2;
+            const endY = distance;
+            let currentY = startY;
+
+            function animate() {
+                drawTarget();
+
+                // Draw Zone Labels
+                ctx.fillStyle = '#000';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('LEFT', 40, canvas.height / 2);
+                ctx.fillText('CENTER', canvas.width / 2, canvas.height / 2 + 30);
+                ctx.fillText('RIGHT', canvas.width - 40, canvas.height / 2);
+
+                // Draw arrow
+                ctx.strokeStyle = '#8B4513';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(canvas.width / 2 - 20, currentY);
+                ctx.lineTo(canvas.width / 2 - 20, currentY + 40);
+                ctx.stroke();
+
+                // Arrowhead
+                ctx.fillStyle = '#FF0000';
+                ctx.beginPath();
+                ctx.moveTo(canvas.width / 2 - 20, currentY);
+                ctx.lineTo(canvas.width / 2 - 15, currentY + 8);
+                ctx.lineTo(canvas.width / 2 - 25, currentY + 8);
+                ctx.closePath();
+                ctx.fill();
+
+                currentY += (endY - startY) / 30 * config.speed;
+
+                if ((endY - startY > 0 && currentY < endY) || (endY - startY <= 0 && currentY > endY)) {
+                    requestAnimationFrame(animate);
+                } else {
+                    finishShot(arrowZone);
+                }
+            }
+
+            animate();
+        }
+
+        const arrowDistanceMap = {
+            left: 50,
+            center: 140,
+            right: 220
+        };
+
+        function finishShot(arrowZone) {
+            const isHit = arrowZone === gameState.selectedZone;
+            if (isHit) {
+                gameState.hits++;
+                document.getElementById('hits').textContent = gameState.hits;
+            }
+
+            const accuracy = gameState.attempts > 0 ? Math.round((gameState.hits / gameState.attempts) * 100) : 0;
+            document.getElementById('accuracy').textContent = accuracy + '%';
+
+            const resultEl = document.getElementById('result');
+            if (isHit) {
+                resultEl.textContent = '🎯 Hit! The arrow landed in ' + arrowZone + '!';
+                resultEl.className = 'result hit';
+            } else {
+                resultEl.textContent = `❌ Miss! You picked ${gameState.selectedZone}, but it landed in ${arrowZone}!`;
+                resultEl.className = 'result miss';
+            }
+            resultEl.style.display = 'block';
+
+            document.querySelectorAll('.zone-btn').forEach(btn => btn.style.opacity = '1');
+            gameState.selectedZone = null;
+            gameState.shooting = false;
+        }
+
+        document.getElementById('difficultySelect').addEventListener('change', (e) => {
+            gameState.difficulty = e.target.value;
+        });
+
+        // Initial draw
+        drawTarget();
+    </script>
+</body>
+</html>

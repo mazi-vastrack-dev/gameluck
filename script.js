@@ -1,36 +1,15 @@
 // ==================== GAME STATE ====================
 const DIRECTIONS = {
-    TL: { name: 'Top Left', emoji: '↖️', x: 'left', y: 'top' },
-    TC: { name: 'Top Center', emoji: '⬆️', x: 'center', y: 'top' },
-    TR: { name: 'Top Right', emoji: '↗️', x: 'right', y: 'top' },
-    ML: { name: 'Mid Left', emoji: '⬅️', x: 'left', y: 'mid' },
-    MC: { name: 'Center', emoji: '⏺️', x: 'center', y: 'mid' },
-    MR: { name: 'Mid Right', emoji: '➡️', x: 'right', y: 'mid' },
-    BL: { name: 'Bottom Left', emoji: '↙️', x: 'left', y: 'bottom' },
-    BC: { name: 'Bottom Center', emoji: '⬇️', x: 'center', y: 'bottom' },
-    BR: { name: 'Bottom Right', emoji: '↘️', x: 'right', y: 'bottom' },
+    L: { name: 'Left', emoji: '⬅️', x: 'left', y: 'mid' },
+    C: { name: 'Center', emoji: '⏺️', x: 'center', y: 'mid' },
+    R: { name: 'Right', emoji: '➡️', x: 'right', y: 'mid' },
 };
 
 const DIFFICULTY_CONFIG = {
-    easy: {
-        winChance: 0.30,
-        label: 'Easy (30% win chance)',
-        biasStrength: 0.3,
-    },
-    normal: {
-        winChance: 0.15,
-        label: 'Normal (15% win chance)',
-        biasStrength: 0.6,
-    },
     hard: {
-        winChance: 0.08,
-        label: 'Hard (8% win chance)',
+        winChance: 0.30,
+        label: 'Hard (30% win chance)',
         biasStrength: 0.75,
-    },
-    impossible: {
-        winChance: 0.03,
-        label: 'Impossible (3% win chance)',
-        biasStrength: 0.90,
     },
 };
 
@@ -38,7 +17,7 @@ let gameState = {
     selectedDirection: null,
     chosenDirection: null,
     isPlaying: false,
-    difficulty: 'normal',
+    difficulty: 'hard',
     attempts: 0,
     wins: 0,
     animating: false,
@@ -183,15 +162,9 @@ async function kick() {
     
     // Determine animation based on chosen direction
     const directionMap = {
-        'TL': 'kickBallTopLeft',
-        'TC': 'kickBallTopCenter',
-        'TR': 'kickBallTopRight',
-        'ML': 'kickBallMidLeft',
-        'MC': 'kickBallMidCenter',
-        'MR': 'kickBallMidRight',
-        'BL': 'kickBallBottomLeft',
-        'BC': 'kickBallBottomCenter',
-        'BR': 'kickBallBottomRight'
+        L: 'kickBallLeft',
+        C: 'kickBallCenter',
+        R: 'kickBallRight'
     };
     
     const animationName = directionMap[gameState.chosenDirection] || 'kickBall';
@@ -259,7 +232,7 @@ function resetGame() {
 
     const ball = document.getElementById('ball');
     ball.style.animation = 'none';
-    ball.style.transform = 'translateX(-50%) rotateX(20deg) rotateY(20deg)';
+    ball.style.transform = 'translateX(-50%)';
 
     createDirectionButtons();
 }
@@ -267,12 +240,6 @@ function resetGame() {
 // ==================== EVENT LISTENERS ====================
 document.addEventListener('DOMContentLoaded', () => {
     createDirectionButtons();
-
-    // Difficulty selector
-    const difficultySelect = document.getElementById('difficultySelect');
-    difficultySelect.addEventListener('change', (e) => {
-        gameState.difficulty = e.target.value;
-    });
 
     // Kick button
     document.getElementById('kickBtn').addEventListener('click', kick);
@@ -285,6 +252,14 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('resultContainer').style.display = 'none';
         resetGame();
     });
+
+    // Back button
+    const backBtn = document.getElementById('backBtn');
+    if (backBtn) {
+        backBtn.addEventListener('click', () => {
+            window.location.href = 'menu.html';
+        });
+    }
 
     updateStats();
     console.log('✅ Penalty Kick Game loaded!');
