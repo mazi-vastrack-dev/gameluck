@@ -11,7 +11,7 @@ class GameHub {
         
         this.stats = this.loadStats();
         this.isMuted = localStorage.getItem(this.muteKey) === 'true';
-        this.currentTheme = localStorage.getItem(this.themeKey) || 'dark';
+        this.themeSetting = localStorage.getItem(this.themeKey) || 'auto'; // 'auto', 'light', 'dark'
         this.audioCtx = null;
         
         // Dynamic CSS injection for font
@@ -27,9 +27,9 @@ class GameHub {
 
     init() {
         // Apply saved theme state
-        this.applyTheme(this.currentTheme);
+        this.applyTheme();
 
-        // Only inject header if we are not in index.html or menu.html (if menu.html is bypassed)
+        // Only inject header if we are not in index.html or menu.html
         const path = window.location.pathname;
         const page = path.substring(path.lastIndexOf('/') + 1);
         
@@ -40,8 +40,22 @@ class GameHub {
         }
     }
 
-    applyTheme(theme) {
-        if (theme === 'light') {
+    getAutoTheme() {
+        const hour = new Date().getHours();
+        // Light mode between 6:00 AM (6) and 6:00 PM (18)
+        return (hour >= 6 && hour < 18) ? 'light' : 'dark';
+    }
+
+    resolveTheme() {
+        if (this.themeSetting === 'auto') {
+            return this.getAutoTheme();
+        }
+        return this.themeSetting; // 'light' or 'dark'
+    }
+
+    applyTheme() {
+        const activeTheme = this.resolveTheme();
+        if (activeTheme === 'light') {
             document.body.classList.add('light-theme');
         } else {
             document.body.classList.remove('light-theme');
@@ -50,9 +64,16 @@ class GameHub {
     }
 
     toggleTheme() {
-        this.currentTheme = this.currentTheme === 'dark' ? 'light' : 'dark';
-        localStorage.setItem(this.themeKey, this.currentTheme);
-        this.applyTheme(this.currentTheme);
+        // Cycle: auto -> light -> dark -> auto
+        if (this.themeSetting === 'auto') {
+            this.themeSetting = 'light';
+        } else if (this.themeSetting === 'light') {
+            this.themeSetting = 'dark';
+        } else {
+            this.themeSetting = 'auto';
+        }
+        localStorage.setItem(this.themeKey, this.themeSetting);
+        this.applyTheme();
     }
 
     injectGoogleFonts() {
@@ -279,8 +300,8 @@ class GameHub {
                     <span class="streak-icon">🔥</span>
                     <span class="hub-stat-value" id="hubStreak">${this.stats.streaks}</span>
                 </div>
-                <button class="hub-audio-toggle" id="hubThemeBtn" title="Toggle Theme" style="margin-right: -4px;">
-                    <span class="audio-icon" id="hubThemeIcon">🌙</span>
+                <button class="hub-audio-toggle" id="hubThemeBtn" title="Toggle Theme" style="margin-right: -4px; padding: 0 8px; width: auto; min-width: 32px; border-radius: 20px;">
+                    <span class="audio-icon" id="hubThemeIcon">🌓</span>
                 </button>
                 <button class="hub-audio-toggle" id="hubAudioBtn" title="Toggle Sound">
                     <span class="audio-icon" id="hubAudioIcon">🔊</span>
@@ -309,8 +330,19 @@ class GameHub {
 
     updateThemeBtn() {
         const iconEl = document.getElementById('hubThemeIcon');
+        const btnEl = document.getElementById('hubThemeBtn');
         if (iconEl) {
-            iconEl.textContent = this.currentTheme === 'light' ? '☀️' : '🌙';
+            const activeTheme = this.resolveTheme();
+            if (this.themeSetting === 'auto') {
+                iconEl.textContent = activeTheme === 'light' ? '🌓☀️' : '🌓🌙';
+                if (btnEl) btnEl.title = `Theme: Auto [${activeTheme === 'light' ? 'Day' : 'Night'}] (Click to switch to Light)`;
+            } else if (this.themeSetting === 'light') {
+                iconEl.textContent = '☀️';
+                if (btnEl) btnEl.title = "Theme: Light (Click to switch to Dark)";
+            } else {
+                iconEl.textContent = '🌙';
+                if (btnEl) btnEl.title = "Theme: Dark (Click to switch to Auto)";
+            }
         }
     }
 
