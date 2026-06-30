@@ -487,11 +487,11 @@
 
             // Draw floating scores (+1 popup)
             ctx.save();
-            ctx.fillStyle = '#10b981';
             ctx.font = 'bold 12px Outfit';
             ctx.textAlign = 'center';
             floatingScores.forEach((fs, idx) => {
-                ctx.fillText('+10 PTS', fs.x, fs.y);
+                ctx.fillStyle = fs.color || '#10b981';
+                ctx.fillText(fs.text || '+10 PTS', fs.x, fs.y);
                 fs.y -= 0.8;
                 fs.alpha -= 0.03;
                 if (fs.alpha <= 0) floatingScores.splice(idx, 1);
@@ -542,31 +542,62 @@
 
             // Check food eat
             if (head.x === food.x && head.y === food.y) {
-                score += 10;
-                document.getElementById('score').textContent = score;
-                
-                // Sound beep
-                window.gameHub.playTone(1100, 0.06, 'sine', 0.08);
+                const dodgeChance = { easy: 0.15, normal: 0.45, hard: 0.80 }[difficulty];
+                if (Math.random() < dodgeChance) {
+                    // Slide up sound tone for dodge
+                    window.gameHub.playTone(700, 0.12, 'triangle', 0.15);
+                    setTimeout(() => {
+                        window.gameHub.playTone(900, 0.12, 'triangle', 0.1);
+                    }, 50);
 
-                // Add float animation
-                floatingScores.push({ 
-                    x: food.x * gridSize + gridSize/2, 
-                    y: food.y * gridSize, 
-                    alpha: 1 
-                });
+                    // Add float animation for dodge
+                    floatingScores.push({
+                        x: food.x * gridSize + gridSize/2,
+                        y: food.y * gridSize,
+                        text: 'DODGED!',
+                        color: '#f59e0b',
+                        alpha: 1
+                    });
 
-                // Spawn neon bursts
-                for(let i=0; i<10; i++) {
-                    eatEffectParticles.push(new Particle(food.x, food.y, '#10b981'));
+                    // Spawn neon gold particles
+                    for(let i=0; i<8; i++) {
+                        eatEffectParticles.push(new Particle(food.x, food.y, '#f59e0b'));
+                    }
+
+                    // Move food to random empty cell
+                    generateFood();
+
+                    // Pop tail segment since we didn't eat it!
+                    snake.pop();
+                } else {
+                    score += 10;
+                    document.getElementById('score').textContent = score;
+                    
+                    // Sound beep
+                    window.gameHub.playTone(1100, 0.06, 'sine', 0.08);
+
+                    // Add float animation
+                    floatingScores.push({ 
+                        x: food.x * gridSize + gridSize/2, 
+                        y: food.y * gridSize, 
+                        text: '+10 PTS',
+                        color: '#10b981',
+                        alpha: 1 
+                    });
+
+                    // Spawn neon bursts
+                    for(let i=0; i<10; i++) {
+                        eatEffectParticles.push(new Particle(food.x, food.y, '#10b981'));
+                    }
+
+                    // Check Diamond prize win target
+                    if (score >= 500) { // e.g. 50 food * 10 pts
+                        handlePrizeWin();
+                        return;
+                    }
+                    
+                    generateFood();
                 }
-
-                // Check Diamond prize win target
-                if (score >= 500) { // e.g. 50 food * 10 pts
-                    handlePrizeWin();
-                    return;
-                }
-                
-                generateFood();
             } else {
                 snake.pop();
             }

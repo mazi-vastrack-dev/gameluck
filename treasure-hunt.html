@@ -138,6 +138,10 @@
       font-size: 11px;
       color: var(--text-secondary);
       font-weight: 600;
+      max-width: 200px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .shield-badge {
@@ -378,9 +382,9 @@
 <body>
 
   <header class="page-header">
-    <p class="eyebrow">Narrative Choice Game</p>
-    <h1>Treasure Hunt</h1>
-    <p class="subtitle">Every path is different. Choose wisely.</p>
+    <p class="eyebrow">Procedural Choice Engine</p>
+    <h1 id="mainTitleHeader">Treasure Hunt</h1>
+    <p class="subtitle" id="mainSubHeader">100 Unique Adventures await. Choose wisely.</p>
     <div class="difficulty-indicator" id="difficultyLabel">Difficulty: Normal</div>
   </header>
 
@@ -395,7 +399,7 @@
   </div>
 
   <footer class="page-footer">
-    Each adventure is randomly selected &mdash; good luck, seeker
+    Procedural Adventure Database &mdash; 100 settings mapped
   </footer>
 
   <!-- Include Game Hub central script -->
@@ -425,41 +429,152 @@
         forest_dragon: { gold: '#f87171', bg: '#0f0606', border: 'rgba(248, 113, 113, 0.15)' }
     };
 
-    /* ═══════════════════════════════════════════════
-       ENGINE
-     ═══════════════════════════════════════════════ */
-    const LETTERS = ['A','B','C','D'];
+    // Helper definitions
+    const LETTERS = ['A', 'B', 'C', 'D'];
+    const TOTAL_PIPS = 4;
     let currentAdventure = null;
     let stepsCompleted = 0;
-    const TOTAL_PIPS = 3;
-    let lastStepId = null; // tracking for easy shield safety return
-    let playerHasShield = DIFFICULTY_CONFIG.hasShield;
+    let lastStepId = null;
+    let playerHasShield = false;
 
-    // Helper functions
-    function shuffle(arr) {
-      return [...arr].sort(() => Math.random() - 0.5);
-    }
-
-    function applyAdventureTheme(storyId) {
-        const theme = ADVENTURE_THEMES[storyId];
-        if (theme) {
-            document.documentElement.style.setProperty('--gold', theme.gold);
-            document.documentElement.style.setProperty('--bg-deep', theme.bg);
-            document.documentElement.style.setProperty('--border', theme.border);
+    function shuffle(array) {
+        let currentIndex = array.length, randomIndex;
+        while (currentIndex !== 0) {
+            randomIndex = Math.floor(Math.random() * currentIndex);
+            currentIndex--;
+            [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
         }
+        return array;
     }
 
     /* ═══════════════════════════════════════════════
-       DYNAMIC STORY GENERATOR
+       100-ADVENTURE DATA DECK
+    ═══════════════════════════════════════════════ */
+    const ADVENTURES_DB = [
+      // Ocean theme (corridor)
+      { name: "Sunken Temple of Aurath", relic: "Golden Compass of Tides", emoji: "🧭", style: "sunken_temple", type: "corridor" },
+      { name: "Ghost Ship of Blackwood", relic: "Phantom Anchor", emoji: "⚓", style: "sunken_temple", type: "corridor" },
+      { name: "Lost City of Atlantis", relic: "Poseidon's Trident", emoji: "🔱", style: "sunken_temple", type: "corridor" },
+      { name: "Coral Reef Labyrinth", relic: "Pearl of Wisdom", emoji: "🦪", style: "sunken_temple", type: "corridor" },
+      { name: "Siren's Lagoon", relic: "Golden Harp", emoji: "🎵", style: "sunken_temple", type: "corridor" },
+      { name: "Bermudan Triangle Trench", relic: "Magnetic Regulator", emoji: "📐", style: "sunken_temple", type: "corridor" },
+      { name: "Sunken City of R'lyeh", relic: "Elder Sign Star", emoji: "🌟", style: "sunken_temple", type: "corridor" },
+      { name: "Great Blue Hole", relic: "Deep Sea Core", emoji: "🕳️", style: "sunken_temple", type: "corridor" },
+      { name: "Hydrothermal Vent Caves", relic: "Magma Core", emoji: "🔥", style: "sunken_temple", type: "corridor" },
+      { name: "Marianas Trench Station", relic: "Pressure Capsule", emoji: "🧫", style: "sunken_temple", type: "corridor" },
+      { name: "Sunken Submarine Thresher", relic: "Decryption Key", emoji: "💾", style: "sunken_temple", type: "corridor" },
+      { name: "Drowned Forest of Lake Kaindy", relic: "Frozen Leaf", emoji: "🍃", style: "sunken_temple", type: "corridor" },
+      { name: "Abyssal Plain Ruins", relic: "Dark Pearl", emoji: "⚪", style: "sunken_temple", type: "corridor" },
+      { name: "Sunken Galleon Santa Maria", relic: "Doubloon Hoard", emoji: "💰", style: "sunken_temple", type: "corridor" },
+      { name: "Sunken Wharf of Valdris", relic: "Brass Sextant", emoji: "🗺️", style: "sunken_temple", type: "corridor" },
+      { name: "Kuroshio Trench Abyss", relic: "Tsunami Jade", emoji: "🟢", style: "sunken_temple", type: "corridor" },
+      { name: "Maelstrom Vortex Cave", relic: "Tempest Diamond", emoji: "💎", style: "sunken_temple", type: "corridor" },
+      { name: "Iceberg Grotto of Svalbard", relic: "Glacier Sapphire", emoji: "🔷", style: "sunken_temple", type: "corridor" },
+      { name: "Sea Snake Sanctuary", relic: "Viper Eye Coral", emoji: "🐍", style: "sunken_temple", type: "corridor" },
+      { name: "Kelp Forest Catacombs", relic: "Neptune Coronet", emoji: "👑", style: "sunken_temple", type: "corridor" },
+      { name: "Sunken Pirate Haven", relic: "Captain Blackbeard's Log", emoji: "📖", style: "sunken_temple", type: "corridor" },
+      { name: "Octopus Garden Vault", relic: "Nautilus Shell", emoji: "🐚", style: "sunken_temple", type: "corridor" },
+      { name: "Drowned Cathedral of Ys", relic: "Sacred Bell of Ys", emoji: "🔔", style: "sunken_temple", type: "corridor" },
+      { name: "Sunken Temple of Sobek", relic: "Crocodile Emerald", emoji: "🐊", style: "sunken_temple", type: "corridor" },
+      { name: "Trench of Lost Hopes", relic: "Obsidian Anchor", emoji: "⚓", style: "sunken_temple", type: "corridor" },
+
+      // Desert theme (riddle)
+      { name: "Sphinx of Kha'aret", relic: "Eye of Solara", emoji: "💎", style: "desert_sphinx", type: "riddle" },
+      { name: "Lost Library of Alexandria", relic: "Scroll of Thoth", emoji: "📜", style: "desert_sphinx", type: "riddle" },
+      { name: "Sky Fortress of Zephyrus", relic: "Aether Ring", emoji: "🌪️", style: "desert_sphinx", type: "riddle" },
+      { name: "Citadel of the Sun", relic: "Helios Spear", emoji: "☀️", style: "desert_sphinx", type: "riddle" },
+      { name: "Sky Garden of Olympus", relic: "Ambrosia Nectar", emoji: "🍷", style: "desert_sphinx", type: "riddle" },
+      { name: "Valley of the Kings", relic: "Scarab Amulet", emoji: "🪲", style: "desert_sphinx", type: "riddle" },
+      { name: "Sahara Dune Ruins", relic: "Sun Gem", emoji: "🔆", style: "desert_sphinx", type: "riddle" },
+      { name: "Oasis of Whispers", relic: "Mirage Mirror", emoji: "🪞", style: "desert_sphinx", type: "riddle" },
+      { name: "Lost Temple of Petra", relic: "Rose Quartz", emoji: "🌸", style: "desert_sphinx", type: "riddle" },
+      { name: "Mesa Cave of Anasazi", relic: "Turquoise Mask", emoji: "🎭", style: "desert_sphinx", type: "riddle" },
+      { name: "Gobi Dust Storm Fort", relic: "Nomad Crest", emoji: "🛡️", style: "desert_sphinx", type: "riddle" },
+      { name: "Red Canyon Tomb", relic: "Canyons Opal", emoji: "🔴", style: "desert_sphinx", type: "riddle" },
+      { name: "Salt Flats Citadel", relic: "Salt Pillar Crystal", emoji: "🧂", style: "desert_sphinx", type: "riddle" },
+      { name: "Dead Sea Cave", relic: "Copper Scroll", emoji: "📜", style: "desert_sphinx", type: "riddle" },
+      { name: "Grand Library of Alexandria", relic: "Astrolabe of Alexandria", emoji: "🧭", style: "desert_sphinx", type: "riddle" },
+      { name: "Tower of Babel", relic: "Stone of Babel", emoji: "🧱", style: "desert_sphinx", type: "riddle" },
+      { name: "Hanging Palace of Xian", relic: "Jade Dragon", emoji: "🐉", style: "desert_sphinx", type: "riddle" },
+      { name: "Temple of Solomon", relic: "Ark Tablet", emoji: "📖", style: "desert_sphinx", type: "riddle" },
+      { name: "Mayan Step Pyramid", relic: "Obsidian Mirror", emoji: "🪞", style: "desert_sphinx", type: "riddle" },
+      { name: "Tomb of Qin Shi Huang", relic: "Terracotta Seal", emoji: "🏺", style: "desert_sphinx", type: "riddle" },
+      { name: "Aztec Gold Temple", relic: "Solar Disk", emoji: "🟡", style: "desert_sphinx", type: "riddle" },
+      { name: "Machu Picchu Citadel", relic: "Sun Stone", emoji: "🪨", style: "desert_sphinx", type: "riddle" },
+      { name: "Angkor Wat Ruins", relic: "Emerald Buddha", emoji: "🟢", style: "desert_sphinx", type: "riddle" },
+      { name: "Stonehenge Henge", relic: "Druid Monolith", emoji: "🗿", style: "desert_sphinx", type: "riddle" },
+      { name: "Parthenon Vault", relic: "Athena Shield", emoji: "🛡️", style: "desert_sphinx", type: "riddle" },
+
+      // Purple theme (code)
+      { name: "Morrath Lighthouse", relic: "Clockwork Crown", emoji: "👑", style: "haunted_lighthouse", type: "code" },
+      { name: "Spire of Jotun", relic: "Frost Rune", emoji: "❄️", style: "haunted_lighthouse", type: "code" },
+      { name: "Catacombs of Ouroboros", relic: "Seraph's Chalice", emoji: "🍷", style: "haunted_lighthouse", type: "code" },
+      { name: "Crystal Caves of Eloria", relic: "Prismatic Shard", emoji: "💎", style: "haunted_lighthouse", type: "code" },
+      { name: "Clockwork Tower of Bristol", relic: "Chronos Gear", emoji: "⚙️", style: "haunted_lighthouse", type: "code" },
+      { name: "Castle of Dracula", relic: "Vampiric Elixir", emoji: "🩸", style: "haunted_lighthouse", type: "code" },
+      { name: "Aurora Borealis Peak", relic: "Starlight Crystal", emoji: "✨", style: "haunted_lighthouse", type: "code" },
+      { name: "Versailles Mirror Room", relic: "Royal Diamond", emoji: "💍", style: "haunted_lighthouse", type: "code" },
+      { name: "Tower of London Vault", relic: "Scepter Star", emoji: "✨", style: "haunted_lighthouse", type: "code" },
+      { name: "Neuschwanstein Crypt", relic: "Swan Locket", emoji: "🦢", style: "haunted_lighthouse", type: "code" },
+      { name: "Kremlin Treasury", relic: "Fabergé Egg", emoji: "🥚", style: "haunted_lighthouse", type: "code" },
+      { name: "Louvre Secret Room", relic: "Da Vinci Codex", emoji: "📚", style: "haunted_lighthouse", type: "code" },
+      { name: "Vatican Archives", relic: "Papal Ring", emoji: "💍", style: "haunted_lighthouse", type: "code" },
+      { name: "Himeji Castle Safe", relic: "Shogun Sword", emoji: "⚔️", style: "haunted_lighthouse", type: "code" },
+      { name: "Edinburgh Keep", relic: "Destiny Stone", emoji: "🪨", style: "haunted_lighthouse", type: "code" },
+      { name: "Bran Castle Cellar", relic: "Dracula Fang", emoji: "🦷", style: "haunted_lighthouse", type: "code" },
+      { name: "Alhambra Vault", relic: "Moorish Key", emoji: "🔑", style: "haunted_lighthouse", type: "code" },
+      { name: "Mont Saint-Michel Crypt", relic: "Abbot Staff", emoji: "🪄", style: "haunted_lighthouse", type: "code" },
+      { name: "Forbidden City Safe", relic: "Jade Seal", emoji: "🟢", style: "haunted_lighthouse", type: "code" },
+      { name: "Pompeii Lava Vault", relic: "Ash Statue", emoji: "🗿", style: "haunted_lighthouse", type: "code" },
+      { name: "Cappadocia Caves", relic: "Byzantine Cross", emoji: "✝️", style: "haunted_lighthouse", type: "code" },
+      { name: "Shuruppak Tablets", relic: "Clay Tablet", emoji: "🧱", style: "haunted_lighthouse", type: "code" },
+      { name: "Knossos Labyrinth", relic: "Minotaur Horn", emoji: "🐂", style: "haunted_lighthouse", type: "code" },
+      { name: "Mycenae Gold Grave", relic: "Agamemnon Mask", emoji: "🎭", style: "haunted_lighthouse", type: "code" },
+      { name: "Troy Wooden Vault", relic: "Helen Necklace", emoji: "📿", style: "haunted_lighthouse", type: "code" },
+
+      // Red theme (stealth)
+      { name: "Grove of Mosscoil", relic: "Ember Stone", emoji: "🪨", style: "forest_dragon", type: "stealth" },
+      { name: "Caldera of Ignis", relic: "Obsidian Heart", emoji: "❤️", style: "forest_dragon", type: "stealth" },
+      { name: "Deep Core Submarine", relic: "Leviathan Engine", emoji: "⚙️", style: "forest_dragon", type: "stealth" },
+      { name: "Hanging Gardens of Babylon", relic: "Eternal Rose", emoji: "🌹", style: "forest_dragon", type: "stealth" },
+      { name: "Mines of Moria", relic: "Mithril Ingot", emoji: "⛓️", style: "forest_dragon", type: "stealth" },
+      { name: "Whispering Woods", relic: "Druid's Staff", emoji: "🪄", style: "forest_dragon", type: "stealth" },
+      { name: "Amazon Jungle Canopy", relic: "Golden Jaguar", emoji: "🐆", style: "forest_dragon", type: "stealth" },
+      { name: "Sherwood Forest Cave", relic: "Bow of Robin", emoji: "🏹", style: "forest_dragon", type: "stealth" },
+      { name: "Black Forest Hollow", relic: "Witch Broom", emoji: "🧹", style: "forest_dragon", type: "stealth" },
+      { name: "Bamboo Forest Nest", relic: "Jade Flute", emoji: "🎋", style: "forest_dragon", type: "stealth" },
+      { name: "Redwood Canopy", relic: "Giant Cone", emoji: "🌲", style: "forest_dragon", type: "stealth" },
+      { name: "Congo Jungle Temple", relic: "Gorilla Idol", emoji: "🦍", style: "forest_dragon", type: "stealth" },
+      { name: "Madagascar Baobab Nest", relic: "Lemur Amber", emoji: "💎", style: "forest_dragon", type: "stealth" },
+      { name: "Mount Kenya Cave", relic: "Ivory Tusk", emoji: "🐘", style: "forest_dragon", type: "stealth" },
+      { name: "Okavango Delta Den", relic: "Cheetah Talisman", emoji: "🐆", style: "forest_dragon", type: "stealth" },
+      { name: "Yellowstone Geyser Caves", relic: "Geyser Core", emoji: "💧", style: "forest_dragon", type: "stealth" },
+      { name: "Grand Canyon Caves", relic: "Condor Feather", emoji: "🪶", style: "forest_dragon", type: "stealth" },
+      { name: "Serengeti Plain Nest", relic: "Lion Claw", emoji: "🦁", style: "forest_dragon", type: "stealth" },
+      { name: "Great Barrier Reef Den", relic: "Shark Tooth", emoji: "🦈", style: "forest_dragon", type: "stealth" },
+      { name: "Galapagos Cave", relic: "Darwin Finch", emoji: "🐦", style: "forest_dragon", type: "stealth" },
+      { name: "Sahara Oasis Cave", relic: "Sand Viper Fangs", emoji: "🐍", style: "forest_dragon", type: "stealth" },
+      { name: "Colosseum Dungeon", relic: "Gladiator Sword", emoji: "⚔️", style: "forest_dragon", type: "stealth" },
+      { name: "Taj Mahal Crypt", relic: "Imperial Pearl", emoji: "🦪", style: "forest_dragon", type: "stealth" },
+      { name: "Chichen Itza Wells", relic: "Rain God Mask", emoji: "🎭", style: "forest_dragon", type: "stealth" },
+      { name: "Easter Island Caves", relic: "Moai Eye", emoji: "🗿", style: "forest_dragon", type: "stealth" }
+    ];
+
+    /* ═══════════════════════════════════════════════
+       PROCEDURAL STORY COMPILER
     ═══════════════════════════════════════════════ */
     function generateDynamicAdventure() {
-        const storyTypes = ["sunken_temple", "desert_sphinx", "haunted_lighthouse", "forest_dragon"];
-        const chosenStory = storyTypes[Math.floor(Math.random() * storyTypes.length)];
+        // Randomly pick one of the 100 adventures from database
+        const index = Math.floor(Math.random() * ADVENTURES_DB.length);
+        const adv = ADVENTURES_DB[index];
         
+        // Update browser titles to make replaying feel immersive
+        document.getElementById('mainTitleHeader').textContent = adv.name;
+        document.getElementById('mainSubHeader').textContent = `Adventure ${index + 1} — Retrieve the ${adv.relic}`;
+
         const steps = [];
 
-        if (chosenStory === "sunken_temple") {
-            // Clue configuration
+        if (adv.type === "corridor") {
             const correctCorridor = Math.random() > 0.5 ? 'fire' : 'water';
             const clueText = correctCorridor === 'fire' 
                 ? "Seek warmth in the glowing flame to find the path." 
@@ -469,10 +584,10 @@
                 id: "start",
                 icon: "🗺️",
                 title: "The Merchant's Map",
-                text: `A dying merchant presses a <em>waterlogged map</em> into your hands. He whispers of the sunken Temple of Aurath. The map shows two entry points: sail across the shallow open bay, or navigate through the bioluminescent caverns with your diving bell.`,
+                text: `A dying merchant presses a map into your hands. He whispers of the legendary **${adv.name}**. The map shows two entry points: sail across the shallow waters, or navigate through the caves.`,
                 choices: shuffle([
-                    { text: "Sail directly across the open bay.", next: "bay" },
-                    { text: "Navigate through the bioluminescent caves.", next: "caves" },
+                    { text: "Sail directly across the shallow water bay.", next: "bay" },
+                    { text: "Navigate through the deep caves.", next: "caves" },
                     { text: "Walk the rocky coastal perimeter.", next: "perimeter_fail" },
                     { text: "Wait at the docks to study the tides.", next: "tides_fail" }
                 ])
@@ -481,34 +596,34 @@
             steps.push({
                 id: "bay",
                 icon: "⚓",
-                title: "The Open Bay",
-                text: `Your vessel cuts through the jade-green bay. Suddenly, a <em>harbour patrol ship</em> hails you. Their captain suspects you of smuggling ancient relics. You must decide quickly.`,
+                title: "The Approach",
+                text: `Your vessel cuts through the waters. Suddenly, a guardian patrol ship halts your progress. They suspect you of seeking the **${adv.relic}**. You must act fast.`,
                 choices: shuffle([
-                    { text: "Bribe the captain with your last bag of silver coins.", next: "inner_chamber" },
-                    { text: "Raise every sail and outrun him in these shallow channels.", next: "run_fail" },
-                    { text: "Surrender immediately and explain your academic purpose.", next: "run_fail" },
-                    { text: "Disguise your ship as a local fishing boat.", next: "fish_fail" }
+                    { text: "Bribe the guards with silver coins.", next: "inner_chamber" },
+                    { text: "Raise sails and outrun them.", next: "run_fail" },
+                    { text: "Surrender and state your research.", next: "run_fail" },
+                    { text: "Disguise your vessel.", next: "fish_fail" }
                 ])
             });
 
             steps.push({
                 id: "caves",
                 icon: "🕯️",
-                title: "The Cave Labyrinth",
-                text: `Your diving bell slides through <em>black underwater caverns</em>. You reach a chamber with four tunnel openings. One has a faint ocean current pulling towards the main structure.`,
+                title: "The Cave Maze",
+                text: `Your lantern flickers through the dark caverns. You reach a chamber with four split tunnel openings. One has a faint breeze pulling inside.`,
                 choices: shuffle([
-                    { text: "Follow the gentle ocean current.", next: "inner_chamber" },
-                    { text: "Steer into the glowing bioluminescent tube.", next: "caves_trap" },
-                    { text: "Anchor and inspect the rocky walls.", next: "caves_trap" },
+                    { text: "Follow the gentle breeze.", next: "inner_chamber" },
+                    { text: "Steer into the glowing tunnel.", next: "caves_trap" },
+                    { text: "Anchor and inspect the stone walls.", next: "caves_trap" },
                     { text: "Vent air pressure and sink deeper.", next: "caves_trap" }
                 ])
             });
 
             steps.push({
                 id: "inner_chamber",
-                icon: "🏛️",
-                title: "The Temple Entrance",
-                text: `You successfully reach the dry inner sanctum. A ancient glowing tablet on the temple wall translates to: <br><strong style="color:var(--gold); font-size:15px;">"${clueText}"</strong><br> Before you stand four corridor choices, each sealed with a massive crystal portal.`,
+                icon: adv.emoji,
+                title: "The Inner Portal",
+                text: `You successfully reach the dry inner vault. An ancient glowing tablet on the wall reads: <br><strong style="color:var(--gold); font-size:15px;">"${clueText}"</strong><br> Before you stand four corridor doors, each sealed with a massive crystal portal.`,
                 choices: shuffle([
                     { text: "Step into the Chamber of Fire.", next: correctCorridor === 'fire' ? 'win' : 'trap_fire' },
                     { text: "Step into the Chamber of Water.", next: correctCorridor === 'water' ? 'win' : 'trap_water' },
@@ -517,80 +632,25 @@
                 ])
             });
 
-            // Outcomes
-            steps.push({
-                id: "run_fail",
-                icon: "💀",
-                title: "Caught and Imprisoned",
-                text: "The patrol ship surrounds you. You spend months in the harbor prison.",
-                outcome: "lose", outcomeTitle: "Voyage Ended", outcomeText: "The Golden Compass remains lost."
-            });
-            steps.push({
-                id: "fish_fail",
-                icon: "💀",
-                title: "Disguise Blown",
-                text: "Your crude disguise fails immediately. You are hauled away in irons.",
-                outcome: "lose", outcomeTitle: "Voyage Ended", outcomeText: "Your crew is arrested."
-            });
-            steps.push({
-                id: "perimeter_fail",
-                icon: "💀",
-                title: "Swept by Waves",
-                text: "A giant rogue wave sweeps you off the coastal cliffs into the rocky deep.",
-                outcome: "lose", outcomeTitle: "Lost to the Sea", outcomeText: "The sea claimed you."
-            });
-            steps.push({
-                id: "tides_fail",
-                icon: "💀",
-                title: "Rivals Beat You",
-                text: "While you wait at the docks, a rival crew sails out and claims the relics first.",
-                outcome: "lose", outcomeTitle: "Too Slow", outcomeText: "The compass was taken."
-            });
-            steps.push({
-                id: "caves_trap",
-                icon: "💀",
-                title: "Cave Collapse",
-                text: "A tremor rattles the caverns, triggering a massive collapse of silt and rock.",
-                outcome: "lose", outcomeTitle: "Buried Alive", outcomeText: "The caverns collapsed."
-            });
-            steps.push({
-                id: "trap_fire",
-                icon: "💀",
-                title: "Incinerated!",
-                text: "You stepped into the Chamber of Fire, but the embers flared and filled the chamber with magma.",
-                outcome: "lose", outcomeTitle: "Swallowed by Flame", outcomeText: "The embers consumed you."
-            });
-            steps.push({
-                id: "trap_water",
-                icon: "💀",
-                title: "Drowned!",
-                text: "The Chamber of Water flooded instantly, sealing you in a pressurized tank.",
-                outcome: "lose", outcomeTitle: "Flooded", outcomeText: "The tides drowned your progress."
-            });
-            steps.push({
-                id: "trap_earth",
-                icon: "💀",
-                title: "Crushed by Rock!",
-                text: "Massive stone columns slide down from the ceiling, crushing the doorway.",
-                outcome: "lose", outcomeTitle: "Crushed", outcomeText: "The stone vault shut forever."
-            });
-            steps.push({
-                id: "trap_wind" ,
-                icon: "💀",
-                title: "Sucked Into the Void!",
-                text: "A powerful vacuum rips through the corridor, sucking you into a bottomless trench.",
-                outcome: "lose", outcomeTitle: "Sucked Into the Deep", outcomeText: "You fell into the dark."
-            });
+            // Fail and Win states
+            steps.push({ id: "run_fail", icon: "💀", title: "Imprisoned", text: "You were captured. You spend months in the dungeons.", outcome: "lose", outcomeTitle: "Voyage Ended", outcomeText: `The ${adv.relic} remains lost.` });
+            steps.push({ id: "fish_fail", icon: "💀", title: "Disguise Blown", text: "Your crude disguise fails immediately. You are hauled away.", outcome: "lose", outcomeTitle: "Voyage Ended", outcomeText: "Your crew is arrested." });
+            steps.push({ id: "perimeter_fail", icon: "💀", title: "Swept by Waves", text: "A giant wave sweeps you off the coastal cliffs into the rocky deep.", outcome: "lose", outcomeTitle: "Lost to the Sea", outcomeText: "The sea claimed you." });
+            steps.push({ id: "tides_fail", icon: "💀", title: "Rivals Beat You", text: "While you wait, a rival crew sails out and claims the relics first.", outcome: "lose", outcomeTitle: "Too Slow", outcomeText: `The ${adv.relic} was taken.` });
+            steps.push({ id: "caves_trap", icon: "💀", title: "Cave Collapse", text: "A tremor rattles the caverns, triggering a massive collapse of rock.", outcome: "lose", outcomeTitle: "Buried Alive", outcomeText: "The caverns collapsed." });
+            steps.push({ id: "trap_fire", icon: "💀", title: "Incinerated!", text: "You stepped into the Chamber of Fire, but the embers flared and filled the chamber with magma.", outcome: "lose", outcomeTitle: "Swallowed by Flame", outcomeText: "The embers consumed you." });
+            steps.push({ id: "trap_water", icon: "💀", title: "Drowned!", text: "The Chamber of Water flooded instantly, sealing you in a pressurized tank.", outcome: "lose", outcomeTitle: "Flooded", outcomeText: "The tides drowned your progress." });
+            steps.push({ id: "trap_earth", icon: "💀", title: "Crushed by Rock!", text: "Massive stone columns slide down from the ceiling, crushing the doorway.", outcome: "lose", outcomeTitle: "Crushed", outcomeText: "The stone vault shut forever." });
+            steps.push({ id: "trap_wind", icon: "💀", title: "Sucked Into Void!", text: "A powerful vacuum rips through the corridor, sucking you into a bottomless trench.", outcome: "lose", outcomeTitle: "Sucked Into Deep", outcomeText: "You fell into the dark." });
             steps.push({
                 id: "win",
-                icon: "🧭",
-                title: "The Golden Compass",
-                text: "The chosen door leads into a safe chamber. Resting on a pedestal of black coral, the <em>Golden Compass of Tides</em> spins flawlessly.",
-                outcome: "win", outcomeTitle: "Treasure Found!", outcomeText: "You successfully bypassed the ancient traps and claimed the legendary compass!"
+                icon: adv.emoji,
+                title: adv.relic,
+                text: `The chosen door leads into a safe chamber. Resting on a pedestal, the brilliant **${adv.relic}** glows with ancient power.`,
+                outcome: "win", outcomeTitle: "Treasure Found!", outcomeText: `You successfully bypassed the ancient traps and claimed the ${adv.relic}!`
             });
 
-        } else if (chosenStory === "desert_sphinx") {
-            // Riddle pool
+        } else if (adv.type === "riddle") {
             const riddles = [
                 { r: "I have cities but no houses. I have mountains but no trees. I have water but no fish. What am I?", a: "A Map", w: ["A Mirror", "A Desert", "A Painting"] },
                 { r: "I have no voice, yet I speak. I have no wings, yet I fly. What am I?", a: "The Wind", w: ["A Ghost", "A Shadow", "An Echo"] },
@@ -603,11 +663,11 @@
                 id: "start",
                 icon: "🐪",
                 title: "The Caravan Whisper",
-                text: `At a dusty crossroads in the <em>Kha'aret Wastes</em>, a cartographer sells you a scroll containing the coordinates of the <em>Eye of Solara</em>. You must cross the wastes.`,
+                text: `At a dusty crossroads, a cartographer sells you a scroll containing the coordinates of the **${adv.relic}**. You must cross the territory of **${adv.name}**.`,
                 choices: shuffle([
                     { text: "Cross by night along the mountain ridge.", next: "ridge" },
-                    { text: "Join a merchant merchant caravan.", next: "caravan" },
-                    { text: "Hire a local camel guide.", next: "ridge" },
+                    { text: "Join a merchant caravan.", next: "caravan" },
+                    { text: "Hire a local desert guide.", next: "ridge" },
                     { text: "Set off directly through the dunes.", next: "desert_fail" }
                 ])
             });
@@ -616,7 +676,7 @@
                 id: "ridge",
                 icon: "🌄",
                 title: "The Mountain Ridge",
-                text: `High up in the rocky pass, the trail splits into four ravines. A warning sign warns of bandit territories.`,
+                text: `High up in the rocky pass of **${adv.name}**, the trail splits into four ravines. A warning sign warns of bandit territories.`,
                 choices: shuffle([
                     { text: "Take the east defile — it is wind-swept and rocky.", next: "sphinx_gate" },
                     { text: "Descend into the valley floor path.", next: "bandit_fail" },
@@ -628,22 +688,21 @@
             steps.push({
                 id: "caravan",
                 icon: "🏪",
-                title: "The Merchant Caravan",
+                title: "The Caravan",
                 text: `The caravan journeys through the sands. The caravan master says that sandstorms have shifted the dunes, revealing new tracks.`,
                 choices: shuffle([
-                    { text: "Stick to the northern merchant route.", next: "sphinx_gate" },
+                    { text: "Stick to the northern caravan route.", next: "sphinx_gate" },
                     { text: "Steer into the southern oasis canyon.", next: "oasis_fail" },
                     { text: "Scout ahead on foot.", next: "oasis_fail" },
                     { text: "Wait for the night stars to align.", next: "desert_fail" }
                 ])
             });
 
-            // Sphinx puzzle
             steps.push({
                 id: "sphinx_gate",
-                icon: "🗿",
-                title: "The Sphinx of Kha'aret",
-                text: `You stand before a colossal stone Sphinx. Its amber eyes ignite with flame as it bellows: <br><em style="color:var(--gold); font-size:15px;">"${riddle.r}"</em>`,
+                icon: adv.emoji,
+                title: "The Trial of Wisdom",
+                text: `You stand before the ancient stone guardian. Its amber eyes ignite with flame as it bellows the riddle: <br><em style="color:var(--gold); font-size:15px;">"${riddle.r}"</em>`,
                 choices: shuffle([
                     { text: `Answer: "${riddle.a}"`, next: "win" },
                     { text: `Answer: "${riddle.w[0]}"`, next: "sphinx_fail" },
@@ -653,51 +712,20 @@
             });
 
             // Outcomes
-            steps.push({
-                id: "desert_fail",
-                icon: "💀",
-                title: "Lost in the Dunes",
-                text: "The trackless dunes look identical. You wander in circles until dehydration claims you.",
-                outcome: "lose", outcomeTitle: "Lost to Wastes", outcomeText: "The desert claimed another soul."
-            });
-            steps.push({
-                id: "bandit_fail",
-                icon: "💀",
-                title: "Ambushed",
-                text: "Rogue bandits surround you, stealing your map, coordinates, and supplies.",
-                outcome: "lose", outcomeTitle: "Raid Ended", outcomeText: "You return to town empty-handed."
-            });
-            steps.push({
-                id: "fall_fail",
-                icon: "💀",
-                title: "Fatal Slip",
-                text: "A loose ledge crumbles, sending you tumbling down the gorge.",
-                outcome: "lose", outcomeTitle: "Fatal Fall", outcomeText: "The mountain pass was too steep."
-            });
-            steps.push({
-                id: "oasis_fail",
-                icon: "💀",
-                title: "Sinking Sand",
-                text: "The promising oasis canyon is actually a massive bed of deep quicksand.",
-                outcome: "lose", outcomeTitle: "Swallowed Alive", outcomeText: "The quicksand swallowed you."
-            });
-            steps.push({
-                id: "sphinx_fail",
-                icon: "💀",
-                title: "Wrong Answer",
-                text: `The Sphinx growls. Its paws slam down, crushing your exit and causing the cavern to cave in.`,
-                outcome: "lose", outcomeTitle: "Sphinx's Judgment", outcomeText: "You failed the riddle."
-            });
+            steps.push({ id: "desert_fail", icon: "💀", title: "Lost in the Dunes", text: "The trackless dunes look identical. You wander in circles until dehydration claims you.", outcome: "lose", outcomeTitle: "Lost to Wastes", outcomeText: "The desert claimed another soul." });
+            steps.push({ id: "bandit_fail", icon: "💀", title: "Ambushed", text: "Rogue bandits surround you, stealing your map, coordinates, and supplies.", outcome: "lose", outcomeTitle: "Raid Ended", outcomeText: "You return to town empty-handed." });
+            steps.push({ id: "fall_fail", icon: "💀", title: "Fatal Slip", text: "A loose ledge crumbles, sending you tumbling down the gorge.", outcome: "lose", outcomeTitle: "Fatal Fall", outcomeText: "The mountain pass was too steep." });
+            steps.push({ id: "oasis_fail", icon: "💀", title: "Sinking Sand", text: "The promising oasis canyon is actually a massive bed of deep quicksand.", outcome: "lose", outcomeTitle: "Swallowed Alive", outcomeText: "The quicksand swallowed you." });
+            steps.push({ id: "sphinx_fail", icon: "💀", title: "Wrong Answer", text: `The guardian growls. Its paws slam down, crushing your exit and causing the cavern to cave in.`, outcome: "lose", outcomeTitle: "Guardian's Judgment", outcomeText: "You failed the riddle." });
             steps.push({
                 id: "win",
-                icon: "💎",
-                title: "The Eye of Solara",
-                text: `The Sphinx moves its stone paw, revealing a hidden stairwell. Inside, the brilliant <em>Eye of Solara</em> ruby glows in the dark.`,
-                outcome: "win", outcomeTitle: "Treasure Found!", outcomeText: "The ruby is yours. Your vision of the future is clear."
+                icon: adv.emoji,
+                title: adv.relic,
+                text: `The Sphinx moves its stone paw, revealing a hidden stairwell. Inside, the brilliant **${adv.relic}** glows with light.`,
+                outcome: "win", outcomeTitle: "Treasure Found!", outcomeText: `The ${adv.relic} is yours. Your vision of the future is clear.`
             });
 
-        } else if (chosenStory === "haunted_lighthouse") {
-            // Combination digit randomizer
+        } else if (adv.type === "code") {
             const correctDigit = Math.floor(Math.random() * 4) + 3; // 3 to 6
             const distractors = [3, 4, 5, 6].filter(d => d !== correctDigit);
 
@@ -705,23 +733,23 @@
                 id: "start",
                 icon: "🔑",
                 title: "The Storm Letter",
-                text: `A letter arrives detailing the decommissioned lighthouse of Cape Morrath. Inside, a secret vault holds the <em>Clockwork Crown</em>. The letter states you must find the combination written in the keeper's log.`,
+                text: `A letter arrives detailing the secrets of **${adv.name}**. Inside, a vault holds the **${adv.relic}**. The letter states you must find the safety combination in the archives.`,
                 choices: shuffle([
                     { text: "Travel alone immediately through the storm.", next: "storm" },
-                    { text: "Wait for the storm to clear and hire a locksmith companion.", next: "locksmith" },
-                    { text: "Sneak into the lighthouse boat house.", next: "drown_fail" },
-                    { text: "Examine the cliffs for a side cave entry.", next: "cliff_fail" }
+                    { text: "Wait for the storm to clear and hire a locksmith.", next: "locksmith" },
+                    { text: "Sneak into the warehouse entry.", next: "drown_fail" },
+                    { text: "Examine the exterior for a side cave entry.", next: "cliff_fail" }
                 ])
             });
 
             steps.push({
                 id: "storm",
                 icon: "⛈️",
-                title: "Into the Storm",
-                text: `The gale is furious. Inside the lighthouse lobby, you discover the keeper's old logbook. A red-circled entry reads: <br><strong style="color:var(--gold); font-size:15px;">"The vault frequency is set to the Duchess's safety channel: ${correctDigit} Megahertz."</strong>`,
+                title: "The Archives",
+                text: `You find the keeper's old journal inside **${adv.name}**. A red-circled entry reads: <br><strong style="color:var(--gold); font-size:15px;">"The vault frequency is set to the safety channel: ${correctDigit} Megahertz."</strong>`,
                 choices: shuffle([
                     { text: "Descend into the spiral cellar towards the vault.", next: "vault_room" },
-                    { text: "Go up to the lantern room to inspect the lens.", next: "ghost_fail" },
+                    { text: "Go up to the watchtower room.", next: "ghost_fail" },
                     { text: "Wait in the lobby until morning.", next: "rival_fail" },
                     { text: "Search the kitchen drawers for tools.", next: "vault_room" }
                 ])
@@ -730,8 +758,8 @@
             steps.push({
                 id: "locksmith",
                 icon: "🔑",
-                title: "The Locksmith companion",
-                text: `You arrive with your locksmith companion. She inspects the front logs and notes: <br><strong style="color:var(--gold); font-size:15px;">"The Duchess's safety frequency is marked at ${correctDigit} Megahertz."</strong>`,
+                title: "The Locksmith",
+                text: `You arrive with your locksmith companion. She inspects the front logs and notes: <br><strong style="color:var(--gold); font-size:15px;">"The safety frequency is marked at ${correctDigit} Megahertz."</strong>`,
                 choices: shuffle([
                     { text: "Have her lead you to the vault dial.", next: "vault_room" },
                     { text: "Try to pick the back door locks first.", next: "trap_door_fail" },
@@ -742,9 +770,9 @@
 
             steps.push({
                 id: "vault_room",
-                icon: "🔒",
-                title: "The Morrath Vault",
-                text: `You stand before the heavy copper safe. The dial must be tuned to the correct Megahertz frequency.`,
+                icon: adv.emoji,
+                title: "The Dial Lock",
+                text: `You stand before the heavy copper safe. The dial must be tuned to the correct frequency to release the locking bolts.`,
                 choices: shuffle([
                     { text: `Tune the dial to ${correctDigit} Megahertz.`, next: "win" },
                     { text: `Tune the dial to ${distractors[0]} Megahertz.`, next: "vault_trap" },
@@ -754,67 +782,29 @@
             });
 
             // Outcomes
-            steps.push({
-                id: "drown_fail",
-                icon: "💀",
-                title: "Swept Out to Sea",
-                text: "The boathouse doors give way under the storm tide. You are dragged into the surf.",
-                outcome: "lose", outcomeTitle: "Drowned", outcomeText: "The sea claimed another seeker."
-            });
-            steps.push({
-                id: "cliff_fail",
-                icon: "💀",
-                title: "Cliffs Crumble",
-                text: "The muddy cliff path collapses under your feet. You fall into the black breakers.",
-                outcome: "lose", outcomeTitle: "Fatal Fall", outcomeText: "The cliffs were too unstable."
-            });
-            steps.push({
-                id: "ghost_fail",
-                icon: "💀",
-                title: "The Phantom Guard",
-                text: "A ghost keeper appears on the spiral stairs, striking fear into your heart. You flee, falling down the stairs.",
-                outcome: "lose", outcomeTitle: "Scared to Death", outcomeText: "The phantom guard drove you out."
-            });
-            steps.push({
-                id: "rival_fail",
-                icon: "💀",
-                title: "Rivals Slip In",
-                text: "While you wait in the lobby, a rival team enters from the side cellar and takes the crown.",
-                outcome: "lose", outcomeTitle: "Outsmarted", outcomeText: "You lost the initiative."
-            });
-            steps.push({
-                id: "trap_door_fail",
-                icon: "💀",
-                title: "False Floor Triggered",
-                text: "A loose floorboard gives way, plunging you both into a flooded boiler tank.",
-                outcome: "lose", outcomeTitle: "Trapped Below", outcomeText: "You fell into a water trap."
-            });
-            steps.push({
-                id: "vault_trap",
-                icon: "💀",
-                title: "Security Lockout",
-                text: "Tuning to the wrong frequency trips the counterweights. Iron bars lock the door, and toxic steam vents in.",
-                outcome: "lose", outcomeTitle: "Security Trap", outcomeText: "The vault locked down permanently."
-            });
+            steps.push({ id: "drown_fail", icon: "💀", title: "Swept Out", text: "The tide rushes in, sweeping you out of the lower gates into the surf.", outcome: "lose", outcomeTitle: "Drowned", outcomeText: "The sea claimed another seeker." });
+            steps.push({ id: "cliff_fail", icon: "💀", title: "Cliffs Crumble", text: "The muddy path collapses under your feet. You fall into the breakers.", outcome: "lose", outcomeTitle: "Fatal Fall", outcomeText: "The cliffs were too unstable." });
+            steps.push({ id: "ghost_fail", icon: "💀", title: "The Phantom Guard", text: "A ghost keeper appears, striking fear into your heart. You flee, falling down the stairs.", outcome: "lose", outcomeTitle: "Scared to Death", outcomeText: "The phantom guard drove you out." });
+            steps.push({ id: "rival_fail", icon: "💀", title: "Rivals Slip In", text: "While you wait, a rival team enters from the side cellar and takes the crown.", outcome: "lose", outcomeTitle: "Outsmarted", outcomeText: "You lost the initiative." });
+            steps.push({ id: "trap_door_fail", icon: "💀", title: "False Floor Triggered", text: "A loose floorboard gives way, plunging you both into a flooded cellar tank.", outcome: "lose", outcomeTitle: "Trapped Below", outcomeText: "You fell into a water trap." });
+            steps.push({ id: "vault_trap", icon: "💀", title: "Security Lockout", text: "Tuning to the wrong frequency trips the counterweights. Iron bars lock the door, and toxic steam vents in.", outcome: "lose", outcomeTitle: "Security Trap", outcomeText: "The vault locked down permanently." });
             steps.push({
                 id: "win",
-                icon: "👑",
-                title: "The Clockwork Crown",
-                text: "The vault door clicks open. Inside, the breathtaking <em>Clockwork Crown</em> ticks perfectly, glittering with diamonds.",
-                outcome: "win", outcomeTitle: "Treasure Found!", outcomeText: "You successfully unlocked the Duchess's vault and claimed the prize!"
+                icon: adv.emoji,
+                title: adv.relic,
+                text: `The vault clicks open. Inside, the beautiful **${adv.relic}** sits waiting for you!`,
+                outcome: "win", outcomeTitle: "Treasure Found!", outcomeText: `You successfully unlocked the vault and claimed the ${adv.relic}!`
             });
 
-        } else if (chosenStory === "forest_dragon") {
-            // Dragon sensitivity randomizer
+        } else if (adv.type === "stealth") {
             const sensitivities = [
-                { s: "lighting bright torches", key: "torches", text: "Light a bright copper torch to inspect the nest.", badText: "The harsh glare of the torch hits Mosscoil's eyes. He wakes instantly!" },
-                { s: "making noise on dry leaves", key: "leaves", text: "Step carefully across the dry leaf carpet.", badText: "The loud crunching sound of the dried leaves echoes in the cave. Mosscoil wakes instantly!" },
-                { s: "carrying pine wood branches", key: "pine", text: "Carry a fragrant pine branch as camouflage.", badText: "The strong aroma of the pine branch alerts the dragon's nose. Mosscoil wakes instantly!" },
-                { s: "burning small campfire twigs", key: "smoke", text: "Burn some small twigs to create a smoke screen.", badText: "The smoke catches in Mosscoil's nostrils. He sneezes, wakes up, and burns the cavern!" }
+                { s: "lighting bright copper torches", key: "torches", text: "Light a copper torch to inspect the nest.", badText: "The harsh glare of the torch hits the beast's eyes. It wakes instantly!" },
+                { s: "stepping on dry leaves", key: "leaves", text: "Step carefully across the dry leaf carpet.", badText: "The loud crunching sound of the dried leaves echoes in the cave. It wakes instantly!" },
+                { s: "carrying pine wood branches", key: "pine", text: "Carry a pine branch as scent camouflage.", badText: "The strong aroma of the pine branch alerts the beast's nose. It wakes instantly!" },
+                { s: "burning small campfire twigs", key: "smoke", text: "Burn some small twigs to create a smoke screen.", badText: "The smoke catches in the beast's nostrils. It sneezes, wakes up, and flares the cave!" }
             ];
             const chosenSens = sensitivities[Math.floor(Math.random() * sensitivities.length)];
             
-            // Generate choices mapping for the grove
             const groveChoices = sensitivities.map(item => {
                 const isTrap = item.key === chosenSens.key;
                 return {
@@ -827,11 +817,11 @@
                 id: "start",
                 icon: "🌲",
                 title: "The Ranger's Warning",
-                text: `At the edge of the Vethara Wood, a ranger stops you. <br><strong style="color:var(--gold);">"Turn back! The dragon Mosscoil is asleep, but he is sensitive. Whatever you do, avoid ${chosenSens.s}!"</strong>`,
+                text: `At the edge of **${adv.name}**, a ranger stops you. <br><strong style="color:var(--gold);">"Turn back! The beast guarding the ${adv.relic} is asleep, but he is sensitive. Whatever you do, avoid ${chosenSens.s}!"</strong>`,
                 choices: shuffle([
-                    { text: "Detour through the damp fungal marshes.", next: "grove_approach" },
+                    { text: "Detour through the damp marshes.", next: "grove_approach" },
                     { text: "Cut straight through the main thicket.", next: "direct_encounter" },
-                    { text: "Follow the ranger's old supply path.", next: "grove_approach" },
+                    { text: "Follow the old supply path.", next: "grove_approach" },
                     { text: "Wait until the moon sets.", next: "wait_fail" }
                 ])
             });
@@ -840,7 +830,7 @@
                 id: "direct_encounter",
                 icon: "🐉",
                 title: "Face to Face",
-                text: "You stumble right into the deep grove. Giant green scales litter the ground. The sleeping dragon breathes slowly nearby.",
+                text: "You stumble right into the clearing. Giant scales litter the ground. The sleeping guardian breathes slowly nearby.",
                 choices: shuffle([
                     { text: "Back away silently to find the marsh route.", next: "grove_approach" },
                     { text: "Stand completely still and wait.", next: "stand_fail" },
@@ -851,46 +841,28 @@
 
             steps.push({
                 id: "grove_approach",
-                icon: "🌿",
-                title: "Mosscoil's Clearing",
-                text: "You successfully reach the edge of the dragon's nest. The glowing <em>Ember Stone</em> sits nestled in roots, just yards from the dragon's head. How do you move in?",
+                icon: adv.emoji,
+                title: "The Clearing",
+                text: `You successfully reach the edge of the guardian's nest. The glowing **${adv.relic}** sits nestled in roots, just yards from the beast's head. How do you move in?`,
                 choices: shuffle(groveChoices)
             });
 
             // Outcomes
-            steps.push({
-                id: "wait_fail",
-                icon: "💀",
-                title: "Marsh Fog",
-                text: "While you wait, a thick poisonous swamp gas rolls in, forcing you to retreat.",
-                outcome: "lose", outcomeTitle: "Poisoned", outcomeText: "The forest drove you out."
-            });
-            steps.push({
-                id: "stand_fail",
-                icon: "💀",
-                title: "Mosscoil Alerted",
-                text: "Your scent is caught in the breeze. The dragon wakes with a massive roar, breathing white-hot fire.",
-                outcome: "lose", outcomeTitle: "Scorched", outcomeText: "You barely escaped with your life."
-            });
-            steps.push({
-                id: "trap_wake",
-                icon: "💀",
-                title: "Dragon Woken!",
-                text: chosenSens.badText,
-                outcome: "lose", outcomeTitle: "Incinerated", outcomeText: "You triggered the dragon's alarm."
-            });
+            steps.push({ id: "wait_fail", icon: "💀", title: "Marsh Fog", text: "While you wait, a thick poisonous swamp gas rolls in, forcing you to retreat.", outcome: "lose", outcomeTitle: "Poisoned", outcomeText: "The forest drove you out." });
+            steps.push({ id: "stand_fail", icon: "💀", title: "Guardian Alerted", text: "Your scent is caught in the breeze. The beast wakes with a massive roar.", outcome: "lose", outcomeTitle: "Scorched", outcomeText: "You barely escaped with your life." });
+            steps.push({ id: "trap_wake", icon: "💀", title: "Guardian Woken!", text: chosenSens.badText, outcome: "lose", outcomeTitle: "Incinerated", outcomeText: "You triggered the beast's alarm." });
             steps.push({
                 id: "win",
-                icon: "🪨",
-                title: "The Ember Stone",
-                text: "You slip past without making a sound or scent that alerts the dragon. You lift the warm <em>Ember Stone</em> and walk out into the sunlight.",
-                outcome: "win", outcomeTitle: "Treasure Found!", outcomeText: "You successfully stole the dragon's egg!"
+                icon: adv.emoji,
+                title: adv.relic,
+                text: `You slip past without making a sound or scent. You lift the warm **${adv.relic}** and walk out into the sunlight.`,
+                outcome: "win", outcomeTitle: "Treasure Found!", outcomeText: `You successfully stole the ${adv.relic}!`
             });
         }
 
         currentAdventure = {
-            id: chosenStory,
-            tag: `Adventure — ${chosenStory.replace('_', ' ').toUpperCase()}`,
+            id: adv.style,
+            tag: `${adv.name}`,
             steps: steps
         };
     }
@@ -907,6 +879,15 @@
       applyAdventureTheme(currentAdventure.id);
 
       renderStep('start');
+    }
+
+    function applyAdventureTheme(storyId) {
+        const theme = ADVENTURE_THEMES[storyId];
+        if (theme) {
+            document.documentElement.style.setProperty('--gold', theme.gold);
+            document.documentElement.style.setProperty('--bg-deep', theme.bg);
+            document.documentElement.style.setProperty('--border', theme.border);
+        }
     }
 
     function makeChoice(nextId, currentId) {
