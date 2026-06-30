@@ -3,132 +3,629 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🐢 Turtle Race</title>
+    <title>🐢 Turtle Race Prediction - Arcade Game Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="game-hub.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; }
-        .container { background: white; border-radius: 20px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 600px; }
-        h1 { color: #333; margin-bottom: 20px; text-align: center; }
-        p { color: #666; margin-bottom: 30px; text-align: center; }
-        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
-        .stat { background: #f0f0f0; padding: 15px; border-radius: 8px; text-align: center; }
-        .stat-label { display: block; font-size: 14px; color: #666; }
-        .stat-value { display: block; font-size: 28px; font-weight: bold; color: #333; }
-        .race-track { margin: 30px 0; }
-        .turtle { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-        .turtle-lane { background: #E8F5E9; padding: 15px; border-radius: 8px; position: relative; min-height: 60px; }
-        .turtle-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .turtle-name { font-size: 18px; font-weight: bold; }
-        .turtle-position { width: 100%; background: #D4E8D4; height: 30px; border-radius: 5px; position: relative; }
-        .turtle-progress { height: 100%; background: linear-gradient(90deg, #4CAF50, #8BC34A); border-radius: 5px; transition: width 0.3s; display: flex; align-items: center; justify-content: flex-end; padding-right: 5px; font-weight: bold; color: white; }
-        .buttons { text-align: center; }
-        button { background: #667eea; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; cursor: pointer; margin: 5px; }
-        button:hover { background: #764ba2; }
-        .result { margin-top: 20px; padding: 15px; background: #FFF9C4; border-radius: 8px; display: none; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 40%);
+            overflow-x: hidden;
+            padding: 20px;
+        }
+
+        .game-wrapper {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: var(--shadow-premium);
+            max-width: 640px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .game-header h2 {
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff 40%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+        }
+
+        .game-header p {
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-top: 4px;
+            text-align: center;
+        }
+
+        .difficulty-indicator {
+            font-size: 12px;
+            font-weight: 600;
+            margin: -5px 0 5px 0;
+            text-align: center;
+        }
+
+        /* Stats Row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            padding: 10px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* Betting Selector Grid */
+        .selection-panel {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .selection-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .bet-buttons {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+        }
+
+        .btn-bet {
+            font-family: 'Outfit', sans-serif;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 10px 4px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+        }
+
+        .btn-bet:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-bet.selected {
+            box-shadow: 0 0 12px var(--color);
+            border-color: var(--color);
+            color: var(--color);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .btn-bet:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Racetrack Visual Layout */
+        .racetrack-container {
+            background: #151622;
+            border: 2px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 20px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            position: relative;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.6);
+            overflow: hidden;
+        }
+
+        .finish-line-checker {
+            position: absolute;
+            top: 0;
+            right: 50px;
+            bottom: 0;
+            width: 8px;
+            background-image: 
+                repeating-linear-gradient(0deg, #fff, #fff 4px, #000 4px, #000 8px),
+                repeating-linear-gradient(0deg, #000, #000 4px, #fff 4px, #fff 8px);
+            background-size: 100% 100%;
+            opacity: 0.15;
+            z-index: 1;
+            border-right: 1px dashed rgba(255,255,255,0.3);
+        }
+
+        .track-lane {
+            display: flex;
+            align-items: center;
+            position: relative;
+            height: 40px;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+            padding-bottom: 4px;
+        }
+
+        .track-lane:last-child {
+            border-bottom: none;
+        }
+
+        .lane-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            width: 75px;
+            text-align: left;
+            z-index: 2;
+            white-space: nowrap;
+        }
+
+        .lane-runway {
+            flex: 1;
+            position: relative;
+            height: 100%;
+            margin-right: 50px; /* offset for finish line */
+        }
+
+        .turtle-racer {
+            position: absolute;
+            left: 0%;
+            top: 50%;
+            transform: translateY(-50%);
+            transition: left 0.15s linear;
+            z-index: 2;
+        }
+
+        .turtle-racer.running {
+            animation: wiggler 0.25s linear infinite;
+        }
+
+        @keyframes wiggler {
+            0% { transform: translateY(-50%) rotate(-3deg); }
+            50% { transform: translateY(-50%) rotate(3deg); }
+            100% { transform: translateY(-50%) rotate(-3deg); }
+        }
+
+        .standing-panel {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .standing-title {
+            font-weight: 700;
+            color: var(--text-secondary);
+        }
+
+        .standing-leaders {
+            color: var(--neon-gold);
+            font-weight: 600;
+        }
+
+        .action-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .btn-action {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            padding: 14px;
+            border-radius: 12px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+            text-align: center;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .btn-action.start {
+            background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+            color: white;
+            border-color: #34d399;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+        }
+
+        .btn-action.start:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
+        }
+
+        .btn-action:disabled {
+            background: rgba(255, 255, 255, 0.02);
+            border-color: var(--border-subtle);
+            color: var(--text-muted);
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        .btn-action.secondary {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: var(--border-subtle);
+            color: var(--text-secondary);
+        }
+
+        .btn-action.secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🐢 Turtle Race</h1>
-        <p>Pick the turtle you think will win the race! (1 in 100 chance to win!)</p>
-        
-        <div class="stats">
-            <div class="stat">
-                <span class="stat-label">Races</span>
+    <div class="game-wrapper">
+        <div class="game-header">
+            <h2>🐢 Turtle Race</h2>
+            <p>Pick the fastest crawler and watch the sprint!</p>
+        </div>
+
+        <div class="difficulty-indicator" id="difficultyLabel">Difficulty: Normal</div>
+
+        <div class="stats-row">
+            <div class="stat-box">
+                <span class="stat-label">Races Run</span>
                 <span class="stat-value" id="races">0</span>
             </div>
-            <div class="stat">
+            <div class="stat-box">
                 <span class="stat-label">Wins</span>
                 <span class="stat-value" id="wins">0</span>
             </div>
-            <div class="stat">
+            <div class="stat-box">
                 <span class="stat-label">Accuracy</span>
-                <span class="stat-value" id="accuracy">0%</span>
+                <span class="stat-value highlight" id="accuracy">0%</span>
             </div>
         </div>
 
-        <div class="race-track">
-            <div class="turtle">
-                <div>
-                    <div class="turtle-info">
-                        <span class="turtle-name">🐢 Speedy</span>
-                        <button onclick="chooseTurtle('speedy')">Choose</button>
-                    </div>
-                    <div class="turtle-position">
-                        <div class="turtle-progress" id="speedy-progress"></div>
-                    </div>
-                </div>
-                <div>
-                    <div class="turtle-info">
-                        <span class="turtle-name">🐢 Flash</span>
-                        <button onclick="chooseTurtle('flash')">Choose</button>
-                    </div>
-                    <div class="turtle-position">
-                        <div class="turtle-progress" id="flash-progress"></div>
-                    </div>
-                </div>
+        <!-- Selection Panel -->
+        <div class="selection-panel">
+            <span class="selection-title">🗳️ Back a Champion</span>
+            <div class="bet-buttons" id="betGrid">
+                <!-- Buttons will be filled in dynamically -->
             </div>
         </div>
 
-        <div class="result" id="result"></div>
+        <!-- Racetrack visual -->
+        <div class="racetrack-container">
+            <div class="finish-line-checker"></div>
+            <div id="lanesContainer">
+                <!-- Lanes will be generated dynamically -->
+            </div>
+        </div>
 
-        <div class="buttons">
-            <button onclick="resetRace()">New Race</button>
-            <button onclick="location.href='menu.html'">Back to Menu</button>
+        <!-- Standings Info -->
+        <div class="standing-panel">
+            <span class="standing-title">🏆 Standing:</span>
+            <span class="standing-leaders" id="liveStandings">Select a racer and start!</span>
+        </div>
+
+        <div class="action-row">
+            <a class="btn-action secondary" href="index.html">← Return to Lobby</a>
+            <button class="btn-action start" id="raceBtn" onclick="startRace()" disabled>🏁 Start Race</button>
         </div>
     </div>
 
-    <script>
-        let gameStats = { races: 0, wins: 0 };
-        let raceInProgress = false;
-
-        function chooseTurtle(turtle) {
-            if (raceInProgress) return;
-            raceInProgress = true;
-            gameStats.races++;
-
-            // Simulate race - very difficult to win (1 in 100)
-            let speedySpeed = Math.random() * 12 + 4;
-            let flashSpeed = Math.random() * 12 + 4;
+    <!-- Game Over Payout Modal -->
+    <div class="hub-modal-overlay" id="raceResultModal">
+        <div class="hub-modal-box">
+            <div class="hub-modal-icon" id="modalResultIcon">🏆🐢</div>
+            <h3 class="hub-modal-title" id="modalResultTitle">Race Finished!</h3>
+            <p class="hub-modal-desc" id="modalResultDesc">A turtle crossed the checkered line first.</p>
             
-            let speedyPos = 0, flashPos = 0;
-            const interval = setInterval(() => {
-                speedyPos += speedySpeed + (Math.random() - 0.5) * 5;
-                flashPos += flashSpeed + (Math.random() - 0.5) * 5;
+            <div class="hub-modal-stats">
+                <div class="hub-modal-stat">
+                    <span class="hub-modal-stat-label">Winner</span>
+                    <span class="hub-modal-stat-value" id="modalWinnerName" style="color: var(--neon-blue);">Speedy</span>
+                </div>
+                <div class="hub-modal-stat">
+                    <span class="hub-modal-stat-label">Coins Earned</span>
+                    <span class="hub-modal-stat-value gold" id="modalCoins">0</span>
+                </div>
+            </div>
 
-                document.getElementById('speedy-progress').style.width = Math.min(speedyPos, 100) + '%';
-                document.getElementById('flash-progress').style.width = Math.min(flashPos, 100) + '%';
+            <div class="hub-modal-buttons">
+                <button class="hub-btn hub-btn-secondary" onclick="location.href='index.html'">Lobby</button>
+                <button class="hub-btn hub-btn-primary" onclick="closeResultModal(); resetTrack();">New Race</button>
+            </div>
+        </div>
+    </div>
 
-                if (speedyPos >= 100 || flashPos >= 100) {
-                    clearInterval(interval);
-                    const winner = speedyPos > flashPos ? 'speedy' : 'flash';
-                    const resultEl = document.getElementById('result');
-                    
-                    if (winner === turtle) {
-                        gameStats.wins++;
-                        resultEl.textContent = '🎉 You won! ' + (turtle === 'speedy' ? 'Speedy' : 'Flash') + ' won the race!';
-                        resultEl.style.background = '#C8E6C9';
-                    } else {
-                        resultEl.textContent = '❌ You lost! ' + (winner === 'speedy' ? 'Speedy' : 'Flash') + ' won the race!';
-                        resultEl.style.background = '#FFCDD2';
-                    }
-                    resultEl.style.display = 'block';
-                    raceInProgress = false;
-                    updateStats();
+    <!-- Include Game Hub central script -->
+    <script src="game-hub.js"></script>
+    <script>
+        // Racer Metadata
+        const TURTLES = {
+            speedy: { id: 'speedy', name: 'Speedy', emoji: '🟢', color: '#10b981', shell: '#15803d', head: '#34d399' },
+            flash: { id: 'flash', name: 'Flash', emoji: '🔴', color: '#ef4444', shell: '#b91c1c', head: '#f97316' },
+            shellby: { id: 'shellby', name: 'Shellby', emoji: '🟡', color: '#f59e0b', shell: '#d97706', head: '#fbbf24' },
+            rocky: { id: 'rocky', name: 'Rocky', emoji: '🟣', color: '#8b5cf6', shell: '#6b21a8', head: '#c084fc' },
+            bluey: { id: 'bluey', name: 'Bluey', emoji: '🔵', color: '#3b82f6', shell: '#1d4ed8', head: '#06b6d4' }
+        };
+
+        // Read difficulty configuration
+        const difficulty = window.gameHub.getDifficulty();
+        document.getElementById('difficultyLabel').textContent = `Difficulty: ${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}`;
+        if (difficulty === 'easy') {
+            document.getElementById('difficultyLabel').style.color = 'var(--neon-green)';
+        } else if (difficulty === 'hard') {
+            document.getElementById('difficultyLabel').style.color = 'var(--neon-red)';
+        } else {
+            document.getElementById('difficultyLabel').style.color = 'var(--neon-gold)';
+        }
+
+        const DIFFICULTY_REWARDS = {
+            easy: { baseCoins: 20, playerMultiplier: 1.15 },  // Boost player turtle by 15%
+            normal: { baseCoins: 40, playerMultiplier: 1.0 },  // No speed changes
+            hard: { baseCoins: 80, playerMultiplier: 0.85 }   // Nerf player turtle by 15%
+        };
+        const config = DIFFICULTY_REWARDS[difficulty];
+
+        let selectedRacer = null;
+        let raceInProgress = false;
+        let stats = { races: 0, wins: 0 };
+
+        // Render Selector Buttons
+        function renderSelectionGrid() {
+            const betGrid = document.getElementById('betGrid');
+            betGrid.innerHTML = '';
+            
+            Object.values(TURTLES).forEach(turtle => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-bet';
+                btn.style.setProperty('--color', turtle.color);
+                btn.innerHTML = `<span style="font-size:16px;">${turtle.emoji}</span><span>${turtle.name}</span>`;
+                btn.dataset.id = turtle.id;
+                btn.addEventListener('click', () => chooseRacer(turtle.id));
+                betGrid.appendChild(btn);
+            });
+        }
+
+        function generateTurtleSVG(turtle) {
+            return `
+                <svg class="turtle-sprite" viewBox="0 0 40 30" width="38" height="28">
+                    <!-- Flippers -->
+                    <ellipse cx="10" cy="5" rx="5" ry="2" fill="${turtle.head}" />
+                    <ellipse cx="30" cy="5" rx="5" ry="2" fill="${turtle.head}" />
+                    <ellipse cx="10" cy="25" rx="5" ry="2" fill="${turtle.head}" />
+                    <ellipse cx="30" cy="25" rx="5" ry="2" fill="${turtle.head}" />
+                    <!-- Tail -->
+                    <polygon points="5,15 1,13 1,17" fill="${turtle.shell}" />
+                    <!-- Head -->
+                    <circle cx="36" cy="15" r="4.5" fill="${turtle.head}" />
+                    <circle cx="37.5" cy="13.5" r="0.9" fill="#000" /> <!-- Eye -->
+                    <!-- Shell -->
+                    <ellipse cx="20" cy="15" rx="14" ry="9.5" fill="${turtle.shell}" stroke="rgba(255,255,255,0.1)" stroke-width="1" />
+                    <ellipse cx="20" cy="15" rx="8" ry="4.5" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+                </svg>
+            `;
+        }
+
+        // Render Lanes
+        function renderLanes() {
+            const lanesContainer = document.getElementById('lanesContainer');
+            lanesContainer.innerHTML = '';
+            
+            Object.values(TURTLES).forEach(turtle => {
+                const lane = document.createElement('div');
+                lane.className = 'track-lane';
+                lane.innerHTML = `
+                    <div class="lane-label">${turtle.emoji} ${turtle.name}</div>
+                    <div class="lane-runway">
+                        <div class="turtle-racer" id="${turtle.id}-racer" style="left: 0%;">
+                            ${generateTurtleSVG(turtle)}
+                        </div>
+                    </div>
+                `;
+                lanesContainer.appendChild(lane);
+            });
+        }
+
+        function chooseRacer(racerId) {
+            if (raceInProgress) return;
+            window.gameHub.playClick();
+            selectedRacer = racerId;
+            
+            document.querySelectorAll('.btn-bet').forEach(btn => {
+                btn.classList.remove('selected');
+                if (btn.dataset.id === racerId) {
+                    btn.classList.add('selected');
                 }
-            }, 50);
+            });
+            
+            document.getElementById('raceBtn').disabled = false;
         }
 
-        function resetRace() {
-            document.getElementById('speedy-progress').style.width = '0%';
-            document.getElementById('flash-progress').style.width = '0%';
-            document.getElementById('result').style.display = 'none';
+        function startRace() {
+            if (!selectedRacer || raceInProgress) return;
+            
+            raceInProgress = true;
+            stats.races++;
+            document.getElementById('races').textContent = stats.races;
+            
+            // Disable all bet buttons and start trigger
+            document.querySelectorAll('.btn-bet').forEach(btn => btn.disabled = true);
+            document.getElementById('raceBtn').disabled = true;
+
+            // Wiggle wiggling animations for wiggles
+            Object.values(TURTLES).forEach(t => {
+                document.getElementById(`${t.id}-racer`).classList.add('running');
+            });
+
+            // Start synthesized sound loop beeps
+            window.gameHub.playTone(800, 0.15, 'triangle', 0.1); // race gun
+            
+            const positions = { speedy: 0, flash: 0, shellby: 0, rocky: 0, bluey: 0 };
+            
+            const raceTimer = setInterval(() => {
+                // Compute speeds
+                Object.keys(positions).forEach(id => {
+                    let baseStep = 0.5 + Math.random() * 1.5;
+                    
+                    // Boost logic (different turtles get spikes)
+                    if (Math.random() < 0.10) {
+                        baseStep += 1.2 + Math.random() * 1.8;
+                    }
+                    
+                    // Difficulty modifiers for player turtle
+                    if (id === selectedRacer) {
+                        baseStep *= config.playerMultiplier;
+                    }
+                    
+                    positions[id] += baseStep;
+                    
+                    // Limit positions
+                    if (positions[id] > 100) positions[id] = 100;
+                    
+                    // Update layout
+                    document.getElementById(`${id}-racer`).style.left = positions[id] + '%';
+                });
+
+                // Update scoreboard standing readout
+                const sorted = Object.keys(positions).sort((a,b) => positions[b] - positions[a]);
+                const first = TURTLES[sorted[0]];
+                const second = TURTLES[sorted[1]];
+                document.getElementById('liveStandings').textContent = `1st: ${first.emoji} ${first.name} | 2nd: ${second.emoji} ${second.name}`;
+
+                // Check winner
+                const winner = sorted.find(id => positions[id] >= 100);
+                if (winner) {
+                    clearInterval(raceTimer);
+                    finishRace(winner);
+                }
+            }, 60);
         }
 
-        function updateStats() {
-            document.getElementById('races').textContent = gameStats.races;
-            document.getElementById('wins').textContent = gameStats.wins;
-            document.getElementById('accuracy').textContent = gameStats.races > 0 ? Math.round((gameStats.wins / gameStats.races) * 100) + '%' : '0%';
+        function finishRace(winnerId) {
+            // Stop crawling wiggles
+            Object.values(TURTLES).forEach(t => {
+                document.getElementById(`${t.id}-racer`).classList.remove('running');
+            });
+
+            const won = winnerId === selectedRacer;
+            const winner = TURTLES[winnerId];
+            
+            let coinsEarned = 0;
+            if (won) {
+                stats.wins++;
+                coinsEarned = config.baseCoins;
+                window.gameHub.recordWin('turtle', coinsEarned);
+            } else {
+                window.gameHub.recordLoss();
+                window.gameHub.playTone(200, 0.4, 'sawtooth', 0.12);
+            }
+
+            // Update stats displays
+            document.getElementById('wins').textContent = stats.wins;
+            document.getElementById('accuracy').textContent = Math.round((stats.wins / stats.races) * 100) + '%';
+
+            // Show Game Over modal layout
+            document.getElementById('modalWinnerName').textContent = `${winner.emoji} ${winner.name}`;
+            document.getElementById('modalWinnerName').style.color = winner.color;
+            document.getElementById('modalCoins').textContent = coinsEarned;
+            
+            const descEl = document.getElementById('modalResultDesc');
+            if (won) {
+                document.getElementById('modalResultTitle').textContent = 'Prediction Success!';
+                document.getElementById('modalResultIcon').textContent = '🏆🐢💰';
+                descEl.textContent = `Excellent eye! You correctly backed ${winner.name} to win the race on ${difficulty} difficulty!`;
+            } else {
+                document.getElementById('modalResultTitle').textContent = 'Race Finished!';
+                document.getElementById('modalResultIcon').textContent = '🐢💨';
+                descEl.textContent = `You predicted ${TURTLES[selectedRacer].name}, but the winner was ${winner.name}. Better luck next time!`;
+            }
+
+            setTimeout(() => {
+                document.getElementById('raceResultModal').classList.add('active');
+            }, 600);
+        }
+
+        function closeResultModal() {
+            document.getElementById('raceResultModal').classList.remove('active');
+        }
+
+        function resetTrack() {
+            selectedRacer = null;
+            raceInProgress = false;
+            
+            document.getElementById('liveStandings').textContent = 'Select a racer and start!';
+            document.getElementById('raceBtn').disabled = true;
+            
+            document.querySelectorAll('.btn-bet').forEach(btn => {
+                btn.disabled = false;
+                btn.classList.remove('selected');
+            });
+            
+            Object.keys(TURTLES).forEach(id => {
+                document.getElementById(`${id}-racer`).style.left = '0%';
+                document.getElementById(`${id}-racer`).classList.remove('running');
+            });
+        }
+
+        // Initialize board
+        function initGame() {
+            renderSelectionGrid();
+            renderLanes();
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initGame);
+        } else {
+            initGame();
         }
     </script>
 </body>

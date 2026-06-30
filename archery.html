@@ -3,241 +3,605 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🏹 Archery</title>
+    <title>🏹 Archery Prediction - Arcade Game Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="game-hub.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; }
-        .container { background: white; border-radius: 20px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 600px; text-align: center; }
-        h1 { color: #333; margin-bottom: 20px; }
-        .game-area { margin: 30px 0; }
-        .target { width: 250px; height: 250px; margin: 0 auto 30px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #FFD700, #FFA500, #FF6347); border: 5px solid #333; position: relative; }
-        .zone { position: absolute; border: 2px dashed rgba(0,0,0,0.3); border-radius: 50%; }
-        .zone.left { width: 150px; height: 150px; left: 0; top: 50%; transform: translateY(-50%); }
-        .zone.center { width: 100px; height: 100px; left: 50%; top: 50%; transform: translate(-50%, -50%); }
-        .zone.right { width: 150px; height: 150px; right: 0; top: 50%; transform: translateY(-50%); }
-        .stats { display: flex; justify-content: space-around; margin-bottom: 30px; }
-        .stat { background: #f0f0f0; padding: 15px; border-radius: 8px; flex: 1; margin: 0 10px; }
-        .stat-label { display: block; font-size: 14px; color: #666; }
-        .stat-value { display: block; font-size: 28px; font-weight: bold; color: #333; }
-        .buttons { margin-top: 20px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-        button { background: #667eea; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; cursor: pointer; margin: 5px; }
-        button:hover { background: #764ba2; }
-        button:disabled { background: #ccc; cursor: not-allowed; }
-        button.zone-btn { background: #FF6347; }
-        button.zone-btn:hover { background: #E74C3C; }
-        #targetCanvas { border: 3px solid #667eea; border-radius: 10px; }
-        .result { margin-top: 15px; padding: 15px; border-radius: 8px; font-weight: bold; display: none; }
-        .result.hit { background: #C8E6C9; color: #2E7D32; }
-        .result.miss { background: #FFCDD2; color: #C62828; }
-        .difficulty-selector { margin: 20px 0; }
-        .difficulty-selector select { padding: 10px 15px; border: 2px solid #667eea; border-radius: 8px; font-size: 16px; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 40%);
+            overflow-x: hidden;
+        }
+
+        .game-wrapper {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: var(--shadow-premium);
+            max-width: 500px;
+            width: 95%;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .game-header h2 {
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff 40%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .game-header p {
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-top: 4px;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            padding: 10px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .stat-value.highlight {
+            color: var(--neon-gold);
+        }
+
+        .difficulty-indicator {
+            font-size: 12px;
+            font-weight: 600;
+            margin: -5px 0 5px 0;
+        }
+
+        #targetCanvas {
+            border: 2px solid var(--border-subtle);
+            border-radius: 16px;
+            background: linear-gradient(to bottom, #11131e 0%, #090a10 100%);
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.6);
+            display: block;
+            margin: 0 auto;
+        }
+
+        .zone-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .prediction-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .btn-zone {
+            font-family: 'Outfit', sans-serif;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            border-radius: 12px;
+            padding: 14px 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-zone:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-zone.selected {
+            background: rgba(99, 102, 241, 0.08);
+            border-color: var(--neon-blue);
+            color: #60a5fa;
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.15);
+        }
+
+        .btn-zone:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .btn-shoot {
+            font-family: 'Outfit', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            border: 1px solid #fbbf24;
+            border-radius: 12px;
+            padding: 14px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-shoot:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(245, 158, 11, 0.35);
+        }
+
+        .btn-shoot:disabled {
+            background: rgba(255, 255, 255, 0.02);
+            border-color: var(--border-subtle);
+            color: var(--text-muted);
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        /* Result card */
+        .result-card {
+            background: rgba(16, 185, 129, 0.05);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 14px;
+            font-weight: 600;
+            display: none;
+            animation: slideIn 0.3s ease forwards;
+        }
+
+        .result-card.hit {
+            background: rgba(16, 185, 129, 0.05);
+            border-color: rgba(16, 185, 129, 0.25);
+            color: var(--neon-green);
+        }
+
+        .result-card.miss {
+            background: rgba(239, 68, 68, 0.05);
+            border-color: rgba(239, 68, 68, 0.25);
+            color: var(--neon-red);
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .lobby-link {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 13px;
+            font-weight: 500;
+            transition: color 0.2s;
+            margin-top: 10px;
+            display: inline-block;
+        }
+
+        .lobby-link:hover {
+            color: var(--text-primary);
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🏹 Archery Prediction</h1>
-        <p>Predict which zone the arrow will land in!</p>
-        
-        <div class="stats">
-            <div class="stat">
+    <div class="game-wrapper">
+        <div class="game-header">
+            <h2>🏹 Archery Prediction</h2>
+            <p>Predict which zone the arrow will land in!</p>
+        </div>
+
+        <div class="difficulty-indicator" id="difficultyLabel">Difficulty: Normal</div>
+
+        <div class="stats-row">
+            <div class="stat-box">
                 <span class="stat-label">Shots</span>
                 <span class="stat-value" id="attempts">0</span>
             </div>
-            <div class="stat">
+            <div class="stat-box">
                 <span class="stat-label">Hits</span>
                 <span class="stat-value" id="hits">0</span>
             </div>
-            <div class="stat">
+            <div class="stat-box">
                 <span class="stat-label">Accuracy</span>
-                <span class="stat-value" id="accuracy">0%</span>
+                <span class="stat-value highlight" id="accuracy">0%</span>
             </div>
         </div>
 
-        <div class="difficulty-selector">
-            <label>Difficulty:</label>
-            <select id="difficultySelect">
-                <option value="easy">🟢 Easy (70% accuracy)</option>
-                <option value="normal" selected>🟡 Normal (50% accuracy)</option>
-                <option value="hard">🔴 Hard (30% accuracy)</option>
-            </select>
+        <canvas id="targetCanvas" width="340" height="300"></canvas>
+
+        <div class="result-card" id="resultEl"></div>
+
+        <div class="zone-controls">
+            <div class="prediction-buttons">
+                <button class="btn-zone" id="btn-left" onclick="selectPredictionZone('left')">
+                    <span style="font-size:20px;">⬅️</span>
+                    <span>Left</span>
+                </button>
+                <button class="btn-zone" id="btn-center" onclick="selectPredictionZone('center')">
+                    <span style="font-size:20px;">⏺️</span>
+                    <span>Center</span>
+                </button>
+                <button class="btn-zone" id="btn-right" onclick="selectPredictionZone('right')">
+                    <span style="font-size:20px;">➡️</span>
+                    <span>Right</span>
+                </button>
+            </div>
+
+            <button class="btn-shoot" id="shootBtn" onclick="shoot()" disabled>
+                <span>🏹 Shoot Arrow</span>
+            </button>
         </div>
 
-        <div class="game-area">
-            <canvas id="targetCanvas" width="280" height="280"></canvas>
-        </div>
-
-        <div class="buttons">
-            <button id="shootBtn" onclick="shoot()">🏹 Shoot</button>
-            <button id="leftBtn" class="zone-btn" onclick="selectZone('left')">⬅️ Left</button>
-            <button id="centerBtn" class="zone-btn" onclick="selectZone('center')">⬆️ Center</button>
-            <button id="rightBtn" class="zone-btn" onclick="selectZone('right')">➡️ Right</button>
-        </div>
-
-        <div class="result" id="result"></div>
-
-        <div class="buttons" style="margin-top: 30px;">
-            <button onclick="location.href='menu.html'">Back to Menu</button>
+        <div>
+            <a class="lobby-link" href="index.html">← Return to Main Menu</a>
         </div>
     </div>
 
+    <!-- Include Game Hub central script -->
+    <script src="game-hub.js"></script>
     <script>
         const canvas = document.getElementById('targetCanvas');
         const ctx = canvas.getContext('2d');
         
-        let gameState = {
-            selectedZone: null,
-            attempts: 0,
-            hits: 0,
-            shooting: false,
-            difficulty: 'normal'
-        };
-
-        const difficultyConfig = {
-            easy: { accuracy: 0.70, speed: 1 },
-            normal: { accuracy: 0.50, speed: 1.5 },
-            hard: { accuracy: 0.30, speed: 2 }
-        };
-
-        function drawTarget() {
-            ctx.fillStyle = '#f0f0f0';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Outer circle (Red)
-            ctx.fillStyle = '#FF4444';
-            ctx.beginPath();
-            ctx.arc(canvas.width / 2, canvas.height / 2, 130, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Middle circle (Yellow)
-            ctx.fillStyle = '#FFDD44';
-            ctx.beginPath();
-            ctx.arc(canvas.width / 2, canvas.height / 2, 90, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Center (Gold)
-            ctx.fillStyle = '#FFD700';
-            ctx.beginPath();
-            ctx.arc(canvas.width / 2, canvas.height / 2, 50, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Bullseye
-            ctx.fillStyle = '#FF0000';
-            ctx.beginPath();
-            ctx.arc(canvas.width / 2, canvas.height / 2, 15, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.fillStyle = '#000';
-            ctx.beginPath();
-            ctx.arc(canvas.width / 2, canvas.height / 2, 5, 0, Math.PI * 2);
-            ctx.fill();
+        // Read difficulty configuration
+        const difficulty = window.gameHub.getDifficulty();
+        document.getElementById('difficultyLabel').textContent = `Difficulty: ${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}`;
+        if (difficulty === 'easy') {
+            document.getElementById('difficultyLabel').style.color = 'var(--neon-green)';
+        } else if (difficulty === 'hard') {
+            document.getElementById('difficultyLabel').style.color = 'var(--neon-red)';
+        } else {
+            document.getElementById('difficultyLabel').style.color = 'var(--neon-gold)';
         }
 
-        function selectZone(zone) {
-            gameState.selectedZone = zone;
-            document.querySelectorAll('.zone-btn').forEach(btn => btn.style.opacity = '0.5');
-            event.target.style.opacity = '1';
+        const DIFFICULTY_CONFIGS = {
+            easy: { winChance: 0.70, baseCoins: 15, arrowSpeed: 1.0 },
+            normal: { winChance: 0.50, baseCoins: 30, arrowSpeed: 1.4 },
+            hard: { winChance: 0.30, baseCoins: 60, arrowSpeed: 1.8 }
+        };
+        const config = DIFFICULTY_CONFIGS[difficulty];
+
+        let selectedZone = null;
+        let attempts = 0;
+        let hits = 0;
+        let isShooting = false;
+        
+        // Target vibration physical variables
+        let targetShakeForce = 0;
+        let arrowParticles = [];
+
+        class HitParticle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 5;
+                this.vy = (Math.random() - 0.5) * 5;
+                this.size = Math.random() * 3 + 1;
+                this.color = color;
+                this.alpha = 1;
+                this.decay = Math.random() * 0.05 + 0.03;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.alpha -= this.decay;
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function drawTarget() {
+            ctx.fillStyle = '#090a10';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Compute shaking offsets
+            let shakeX = (Math.random() - 0.5) * targetShakeForce;
+            let shakeY = (Math.random() - 0.5) * targetShakeForce;
+            targetShakeForce *= 0.85; // Decay shake
+
+            ctx.save();
+            ctx.translate(canvas.width / 2 + shakeX, canvas.height / 2 + shakeY);
+
+            // Draw shadow of board
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+            ctx.shadowBlur = 15;
+            ctx.shadowOffsetY = 8;
+            
+            // Outer Ring (Red/Black Archery target style)
+            // Outer border
+            ctx.fillStyle = '#1e293b';
+            ctx.beginPath();
+            ctx.arc(0, 0, 105, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Red Ring
+            let radRed = ctx.createRadialGradient(-10, -10, 10, 0, 0, 100);
+            radRed.addColorStop(0, '#ef4444');
+            radRed.addColorStop(0.8, '#dc2626');
+            radRed.addColorStop(1, '#991b1b');
+            ctx.fillStyle = radRed;
+            ctx.beginPath();
+            ctx.arc(0, 0, 100, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Middle Yellow Ring
+            let radYellow = ctx.createRadialGradient(-5, -5, 5, 0, 0, 70);
+            radYellow.addColorStop(0, '#fbbf24');
+            radYellow.addColorStop(0.8, '#f59e0b');
+            radYellow.addColorStop(1, '#d97706');
+            ctx.fillStyle = radYellow;
+            ctx.beginPath();
+            ctx.arc(0, 0, 70, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Center Gold
+            let radGold = ctx.createRadialGradient(-3, -3, 2, 0, 0, 40);
+            radGold.addColorStop(0, '#fef08a');
+            radGold.addColorStop(0.7, '#fbbf24');
+            radGold.addColorStop(1, '#ca8a04');
+            ctx.fillStyle = radGold;
+            ctx.beginPath();
+            ctx.arc(0, 0, 40, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Bullseye Red
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.arc(0, 0, 12, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Pin Center Black
+            ctx.fillStyle = '#000000';
+            ctx.beginPath();
+            ctx.arc(0, 0, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+
+            // Draw Static Text Labels for Zones (placed relative to canvas)
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.font = 'bold 11px Outfit';
+            ctx.textAlign = 'center';
+            ctx.fillText('LEFT ZONE', 55, canvas.height - 20);
+            ctx.fillText('CENTER ZONE', canvas.width / 2, canvas.height - 20);
+            ctx.fillText('RIGHT ZONE', canvas.width - 55, canvas.height - 20);
+        }
+
+        function selectPredictionZone(zone) {
+            if (isShooting) return;
+            window.gameHub.playClick();
+            selectedZone = zone;
+            
+            document.querySelectorAll('.btn-zone').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            document.getElementById(`btn-${zone}`).classList.add('selected');
+            
+            // Enable shoot button
+            document.getElementById('shootBtn').disabled = false;
         }
 
         function shoot() {
-            if (!gameState.selectedZone || gameState.shooting) return;
+            if (!selectedZone || isShooting) return;
             
-            gameState.shooting = true;
-            gameState.attempts++;
-            document.getElementById('attempts').textContent = gameState.attempts;
+            isShooting = true;
+            attempts++;
+            document.getElementById('attempts').textContent = attempts;
             
-            const config = difficultyConfig[gameState.difficulty];
-            const zones = ['left', 'center', 'right'];
-            let arrowZone;
+            // Hide previous results
+            const resultEl = document.getElementById('resultEl');
+            resultEl.style.display = 'none';
             
-            // Arrow lands based on difficulty - if lucky, lands on selection
-            if (Math.random() < config.accuracy) {
-                arrowZone = gameState.selectedZone;
+            // Disable buttons
+            document.querySelectorAll('.btn-zone').forEach(btn => btn.disabled = true);
+            document.getElementById('shootBtn').disabled = true;
+
+            // Determine outcome based on win chance
+            let hitZone;
+            if (Math.random() < config.winChance) {
+                hitZone = selectedZone;
             } else {
-                const otherZones = zones.filter(z => z !== gameState.selectedZone);
-                arrowZone = otherZones[Math.floor(Math.random() * otherZones.length)];
+                const zones = ['left', 'center', 'right'];
+                const others = zones.filter(z => z !== selectedZone);
+                hitZone = others[Math.floor(Math.random() * others.length)];
             }
 
-            const distance = arrowDistanceMap[arrowZone];
-            const startY = canvas.height / 2;
-            const endY = distance;
-            let currentY = startY;
+            // Map hit zone to X position
+            const centerX = canvas.width / 2;
+            const X_MAP = {
+                left: centerX - 55,
+                center: centerX,
+                right: centerX + 55
+            };
 
+            const endX = X_MAP[hitZone];
+            const endY = canvas.height / 2 + (Math.random() - 0.5) * 40; // slight vertical randomness
+            
+            // Arrow animation variables
+            let curX = canvas.width / 2;
+            let curY = 0;
+            
             function animate() {
+                // Clear and redraw target
                 drawTarget();
 
-                // Draw Zone Labels
-                ctx.fillStyle = '#000';
-                ctx.font = 'bold 14px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('LEFT', 40, canvas.height / 2);
-                ctx.fillText('CENTER', canvas.width / 2, canvas.height / 2 + 30);
-                ctx.fillText('RIGHT', canvas.width - 40, canvas.height / 2);
+                // Draw hit particles
+                arrowParticles.forEach(p => p.draw());
 
-                // Draw arrow
-                ctx.strokeStyle = '#8B4513';
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.moveTo(canvas.width / 2 - 20, currentY);
-                ctx.lineTo(canvas.width / 2 - 20, currentY + 40);
-                ctx.stroke();
+                // Draw arrow shaft moving down
+                ctx.save();
+                ctx.translate(curX, curY);
+                
+                // Tilt arrow towards target slightly
+                const angle = Math.atan2(endY - curY, endX - curX);
+                ctx.rotate(angle);
 
-                // Arrowhead
-                ctx.fillStyle = '#FF0000';
+                // Wood shaft
+                ctx.fillStyle = '#b45309';
+                ctx.fillRect(-28, -2, 28, 4);
+
+                // Feather fletchings (back)
+                ctx.fillStyle = '#ffffff';
                 ctx.beginPath();
-                ctx.moveTo(canvas.width / 2 - 20, currentY);
-                ctx.lineTo(canvas.width / 2 - 15, currentY + 8);
-                ctx.lineTo(canvas.width / 2 - 25, currentY + 8);
+                ctx.moveTo(-28, -2);
+                ctx.lineTo(-34, -7);
+                ctx.lineTo(-24, -2);
                 ctx.closePath();
                 ctx.fill();
 
-                currentY += (endY - startY) / 30 * config.speed;
+                ctx.beginPath();
+                ctx.moveTo(-28, 2);
+                ctx.lineTo(-34, 7);
+                ctx.lineTo(-24, 2);
+                ctx.closePath();
+                ctx.fill();
 
-                if ((endY - startY > 0 && currentY < endY) || (endY - startY <= 0 && currentY > endY)) {
+                // Arrow metal point (front)
+                ctx.fillStyle = '#94a3b8';
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(-6, -4);
+                ctx.lineTo(-6, 4);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.restore();
+
+                // Physics step
+                const dx = endX - curX;
+                const dy = endY - curY;
+                const dist = Math.hypot(dx, dy);
+
+                curX += dx * 0.15 * config.arrowSpeed;
+                curY += dy * 0.15 * config.arrowSpeed;
+
+                // Update particles
+                arrowParticles.forEach(p => p.update());
+                arrowParticles = arrowParticles.filter(p => p.alpha > 0);
+
+                if (dist > 5) {
                     requestAnimationFrame(animate);
                 } else {
-                    finishShot(arrowZone);
+                    finishShot(hitZone, endX, endY);
                 }
             }
 
             animate();
         }
 
-        const arrowDistanceMap = {
-            left: 50,
-            center: 140,
-            right: 220
-        };
-
-        function finishShot(arrowZone) {
-            const isHit = arrowZone === gameState.selectedZone;
-            if (isHit) {
-                gameState.hits++;
-                document.getElementById('hits').textContent = gameState.hits;
+        function finishShot(hitZone, x, y) {
+            const isHit = hitZone === selectedZone;
+            
+            // Trigger target shake and particle explosion
+            targetShakeForce = 12;
+            const particleColor = isHit ? '#10b981' : '#f59e0b';
+            for (let i = 0; i < 15; i++) {
+                arrowParticles.push(new HitParticle(x, y, particleColor));
             }
 
-            const accuracy = gameState.attempts > 0 ? Math.round((gameState.hits / gameState.attempts) * 100) : 0;
+            if (isHit) {
+                hits++;
+                document.getElementById('hits').textContent = hits;
+                window.gameHub.recordWin('archery', config.baseCoins);
+            } else {
+                window.gameHub.recordLoss();
+                window.gameHub.playTone(220, 0.25, 'triangle', 0.12); // fail buzz
+            }
+
+            // Update stats layout
+            const accuracy = Math.round((hits / attempts) * 100);
             document.getElementById('accuracy').textContent = accuracy + '%';
 
-            const resultEl = document.getElementById('result');
-            if (isHit) {
-                resultEl.textContent = '🎯 Hit! The arrow landed in ' + arrowZone + '!';
-                resultEl.className = 'result hit';
-            } else {
-                resultEl.textContent = `❌ Miss! You picked ${gameState.selectedZone}, but it landed in ${arrowZone}!`;
-                resultEl.className = 'result miss';
-            }
+            // Show text card
+            const resultEl = document.getElementById('resultEl');
             resultEl.style.display = 'block';
+            if (isHit) {
+                resultEl.className = 'result-card hit';
+                resultEl.textContent = `🎯 Hit! The arrow hit the ${hitZone.toUpperCase()} zone. Wins payout!`;
+            } else {
+                resultEl.className = 'result-card miss';
+                resultEl.textContent = `❌ Miss! You predicted ${selectedZone.toUpperCase()}, but arrow hit ${hitZone.toUpperCase()}.`;
+            }
 
-            document.querySelectorAll('.zone-btn').forEach(btn => btn.style.opacity = '1');
-            gameState.selectedZone = null;
-            gameState.shooting = false;
+            // Restore controls
+            document.querySelectorAll('.btn-zone').forEach(btn => {
+                btn.disabled = false;
+                btn.classList.remove('selected');
+            });
+            
+            selectedZone = null;
+            isShooting = false;
+            
+            // Redraw target static state
+            setTimeout(() => {
+                // Keep drawing target vibrations until done
+                function finalizeDraw() {
+                    drawTarget();
+                    arrowParticles.forEach(p => p.update());
+                    arrowParticles.forEach(p => p.draw());
+                    if (targetShakeForce > 0.1 || arrowParticles.length > 0) {
+                        requestAnimationFrame(finalizeDraw);
+                    }
+                }
+                finalizeDraw();
+            }, 50);
         }
 
-        document.getElementById('difficultySelect').addEventListener('change', (e) => {
-            gameState.difficulty = e.target.value;
-        });
-
-        // Initial draw
+        // Initial render
         drawTarget();
     </script>
 </body>

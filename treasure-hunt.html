@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🗺️ Treasure Hunt - Arcade Game Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Outfit:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="game-hub.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #c9a84c;
+      --gold-dim: #7a5a1a;
+      --gold-faint: #5a3e1b;
+      --bg-deep: #08090f;
+      --bg-mid: rgba(255, 255, 255, 0.02);
+      --bg-hover: rgba(255, 255, 255, 0.06);
+      --text-main: #e8d9b0;
+      --text-body: #d4c49a;
+      --text-muted: #8c8264;
+      --text-faint: #b0a080;
+      --danger: #ef4444;
+      --danger-dim: #991b1b;
+      --border: rgba(90, 62, 27, 0.2);
+      --border-hover: rgba(201, 168, 76, 0.4);
+    }
+
+    html, body {
+      min-height: 100%;
+      background: var(--bg-deep);
+      color: var(--text-main);
+      font-family: 'Lora', Georgia, serif;
+      transition: background-color 0.8s ease;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 2.5rem 1rem 4rem;
+      background-image:
+        radial-gradient(ellipse 100% 50% at 50% 0%, rgba(201, 168, 76, 0.03) 0%, transparent 70%);
+    }
+
+    /* ── Page header ── */
+    .page-header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+      animation: fadeDown 0.6s ease forwards;
+    }
+
+    .page-header .eyebrow {
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .page-header h1 {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: clamp(20px, 4vw, 32px);
+      font-weight: 700;
+      color: var(--gold);
+      text-shadow: 0 0 20px rgba(201, 168, 76, 0.15);
+      margin-bottom: 0.4rem;
+      transition: color 0.8s ease;
+    }
+
+    .page-header .subtitle {
+      font-size: 13px;
+      color: var(--text-faint);
+      font-style: italic;
+    }
+
+    .difficulty-indicator {
+      font-family: 'Outfit', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 6px;
+    }
+
+    /* ── Game card ── */
+    #game-card {
+      width: 100%;
+      max-width: 660px;
+      background: rgba(17, 19, 31, 0.65);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: var(--shadow-premium);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: border-color 0.8s ease;
+    }
+
+    .card-inner {
+      position: relative;
+      z-index: 1;
+      padding: 1.75rem 2rem 2rem;
+    }
+
+    /* ── Card header ── */
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.85rem;
+      margin-bottom: 1.5rem;
+      transition: border-color 0.8s ease;
+    }
+
+    .game-title-sm {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      transition: color 0.8s ease;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .adv-tag {
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .shield-badge {
+      font-family: 'Outfit', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid var(--neon-green);
+      color: var(--neon-green);
+      padding: 3px 8px;
+      border-radius: 20px;
+      text-transform: uppercase;
+    }
+
+    .shield-badge.broken {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: var(--neon-red);
+      color: var(--neon-red);
+    }
+
+    .new-btn {
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--gold);
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      padding: 5px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .new-btn:hover { background: var(--bg-hover); border-color: var(--gold); }
+
+    /* ── Progress ── */
+    .progress-bar {
+      display: flex;
+      gap: 7px;
+      justify-content: center;
+      margin-bottom: 1.75rem;
+    }
+
+    .pip {
+      height: 4px;
+      width: 32px;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: background 0.35s, border-color 0.35s;
+    }
+    .pip.done  { background: var(--gold); border-color: var(--gold); }
+    .pip.active { background: var(--gold-dim); border-color: var(--gold); }
+
+    /* ── Scene ── */
+    .scene-wrap { animation: fadeUp 0.4s ease forwards; }
+
+    .scene-icon {
+      font-size: 44px;
+      text-align: center;
+      margin-bottom: 0.85rem;
+      filter: drop-shadow(0 0 16px rgba(255, 255, 255, 0.1));
+    }
+
+    .scene-title {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: clamp(14px, 2.5vw, 18px);
+      font-weight: 700;
+      color: var(--gold);
+      text-align: center;
+      margin-bottom: 0.85rem;
+      transition: color 0.8s ease;
+    }
+
+    .scene-text {
+      font-size: 14.5px;
+      line-height: 1.85;
+      color: var(--text-body);
+      font-style: italic;
+      max-width: 540px;
+      margin: 0 auto 1.75rem;
+      text-align: center;
+    }
+
+    .scene-text em {
+      font-style: normal;
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    /* ── Choices ── */
+    .choices {
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    .choice-btn {
+      background: var(--bg-mid);
+      border: 1px solid var(--border);
+      color: var(--text-body);
+      font-family: 'Lora', serif;
+      font-size: 13.5px;
+      padding: 13px 18px;
+      border-radius: 10px;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s ease;
+      line-height: 1.6;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .choice-btn:hover {
+      background: var(--bg-hover);
+      border-color: var(--gold);
+      color: var(--text-main);
+      transform: translateX(5px);
+    }
+    .choice-btn:active { transform: translateX(5px) scale(0.99); }
+
+    .choice-letter {
+      font-family: 'Cinzel Decorative', serif;
+      color: var(--gold);
+      font-size: 12px;
+      font-weight: 700;
+      min-width: 18px;
+      padding-top: 2px;
+      transition: color 0.8s ease;
+    }
+
+    /* ── Outcome ── */
+    .outcome-wrap {
+      max-width: 520px;
+      margin: 0 auto;
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      animation: fadeUp 0.4s ease forwards;
+    }
+
+    .outcome-wrap.win {
+      background: rgba(16, 185, 129, 0.03);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+
+    .outcome-wrap.lose {
+      background: rgba(239, 68, 68, 0.03);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+    }
+
+    .outcome-icon { font-size: 40px; margin-bottom: 0.75rem; }
+
+    .outcome-title {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: clamp(14px, 3vw, 18px);
+      margin-bottom: 0.85rem;
+    }
+    .outcome-wrap.win .outcome-title  { color: var(--gold); }
+    .outcome-wrap.lose .outcome-title { color: var(--danger); }
+
+    .outcome-text {
+      font-size: 13.5px;
+      line-height: 1.85;
+      color: var(--text-body);
+      font-style: italic;
+      margin-bottom: 1.5rem;
+    }
+
+    .outcome-btn {
+      font-family: 'Outfit', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 11px 28px;
+      border-radius: 9px;
+      cursor: pointer;
+      border: 1px solid;
+      background: transparent;
+      transition: all 0.2s;
+      letter-spacing: 0.5px;
+    }
+    .outcome-wrap.win .outcome-btn  { border-color: var(--gold); color: var(--gold); }
+    .outcome-wrap.win .outcome-btn:hover  { background: rgba(255, 255, 255, 0.05); }
+    .outcome-wrap.lose .outcome-btn { border-color: var(--danger-dim); color: var(--danger); }
+    .outcome-wrap.lose .outcome-btn:hover { background: rgba(239, 68, 68, 0.1); }
+
+    .reward-payout-text {
+        font-family: 'Outfit', sans-serif;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--gold);
+        margin-bottom: 14px;
+        text-shadow: 0 0 4px rgba(201, 168, 76, 0.3);
+    }
+
+    /* ── Divider ── */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 1.5rem 0 0;
+      transition: border-color 0.8s ease;
+    }
+
+    /* ── Page footer ── */
+    .page-footer {
+      margin-top: 1.75rem;
+      text-align: center;
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    /* ── Animations ── */
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 520px) {
+      .card-inner { padding: 1.25rem 1.25rem 1.5rem; }
+      .scene-text { font-size: 13px; }
+      .choice-btn { font-size: 13px; padding: 11px 14px; }
+      .header-right .adv-tag { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="page-header">
+    <p class="eyebrow">Narrative Choice Game</p>
+    <h1>Treasure Hunt</h1>
+    <p class="subtitle">Every path is different. Choose wisely.</p>
+    <div class="difficulty-indicator" id="difficultyLabel">Difficulty: Normal</div>
+  </header>
+
+  <main id="game-card">
+    <div class="card-inner" id="game-inner">
+      <!-- JS renders here -->
+    </div>
+  </main>
+
+  <div style="text-align:center; margin-top:14px;">
+    <button onclick="location.href='index.html'" style="background:transparent; border:1px solid var(--border); padding:8px 18px; font-family:'Outfit',sans-serif; font-size:13px; font-weight:600; border-radius:8px; color:var(--gold); cursor:pointer; transition:all 0.2s;">← Return to Lobby</button>
+  </div>
+
+  <footer class="page-footer">
+    Each adventure is randomly selected &mdash; good luck, seeker
+  </footer>
+
+  <!-- Include Game Hub central script -->
+  <script src="game-hub.js"></script>
+  <script>
+    // Read difficulty configuration
+    const difficulty = window.gameHub.getDifficulty();
+    document.getElementById('difficultyLabel').textContent = `Difficulty: ${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}`;
+    if (difficulty === 'easy') {
+        document.getElementById('difficultyLabel').style.color = 'var(--neon-green)';
+    } else if (difficulty === 'hard') {
+        document.getElementById('difficultyLabel').style.color = 'var(--neon-red)';
+    } else {
+        document.getElementById('difficultyLabel').style.color = 'var(--neon-gold)';
+    }
+
+    const DIFFICULTY_CONFIG = {
+        easy: { baseCoins: 15, hasShield: true },
+        normal: { baseCoins: 30, hasShield: false },
+        hard: { baseCoins: 50, hasShield: false }
+    }[difficulty];
+
+    const ADVENTURE_THEMES = {
+        sunken_temple: { gold: '#38bdf8', bg: '#020b18', border: 'rgba(56, 189, 248, 0.15)' },
+        desert_sphinx: { gold: '#fbbf24', bg: '#0f0a05', border: 'rgba(251, 191, 36, 0.15)' },
+        haunted_lighthouse: { gold: '#c084fc', bg: '#0a0d14', border: 'rgba(192, 132, 252, 0.15)' },
+        forest_dragon: { gold: '#f87171', bg: '#0f0606', border: 'rgba(248, 113, 113, 0.15)' }
+    };
+
+    /* ═══════════════════════════════════════════════
+       ENGINE
+     ═══════════════════════════════════════════════ */
+    const LETTERS = ['A','B','C','D'];
+    let currentAdventure = null;
+    let stepsCompleted = 0;
+    const TOTAL_PIPS = 3;
+    let lastStepId = null; // tracking for easy shield safety return
+    let playerHasShield = DIFFICULTY_CONFIG.hasShield;
+
+    // Helper functions
+    function shuffle(arr) {
+      return [...arr].sort(() => Math.random() - 0.5);
+    }
+
+    function applyAdventureTheme(storyId) {
+        const theme = ADVENTURE_THEMES[storyId];
+        if (theme) {
+            document.documentElement.style.setProperty('--gold', theme.gold);
+            document.documentElement.style.setProperty('--bg-deep', theme.bg);
+            document.documentElement.style.setProperty('--border', theme.border);
+        }
+    }
+
+    /* ═══════════════════════════════════════════════
+       DYNAMIC STORY GENERATOR
+    ═══════════════════════════════════════════════ */
+    function generateDynamicAdventure() {
+        const storyTypes = ["sunken_temple", "desert_sphinx", "haunted_lighthouse", "forest_dragon"];
+        const chosenStory = storyTypes[Math.floor(Math.random() * storyTypes.length)];
+        
+        const steps = [];
+
+        if (chosenStory === "sunken_temple") {
+            // Clue configuration
+            const correctCorridor = Math.random() > 0.5 ? 'fire' : 'water';
+            const clueText = correctCorridor === 'fire' 
+                ? "Seek warmth in the glowing flame to find the path." 
+                : "Cool waves lead to salvation, ignore the fire.";
+
+            steps.push({
+                id: "start",
+                icon: "🗺️",
+                title: "The Merchant's Map",
+                text: `A dying merchant presses a <em>waterlogged map</em> into your hands. He whispers of the sunken Temple of Aurath. The map shows two entry points: sail across the shallow open bay, or navigate through the bioluminescent caverns with your diving bell.`,
+                choices: shuffle([
+                    { text: "Sail directly across the open bay.", next: "bay" },
+                    { text: "Navigate through the bioluminescent caves.", next: "caves" },
+                    { text: "Walk the rocky coastal perimeter.", next: "perimeter_fail" },
+                    { text: "Wait at the docks to study the tides.", next: "tides_fail" }
+                ])
+            });
+
+            steps.push({
+                id: "bay",
+                icon: "⚓",
+                title: "The Open Bay",
+                text: `Your vessel cuts through the jade-green bay. Suddenly, a <em>harbour patrol ship</em> hails you. Their captain suspects you of smuggling ancient relics. You must decide quickly.`,
+                choices: shuffle([
+                    { text: "Bribe the captain with your last bag of silver coins.", next: "inner_chamber" },
+                    { text: "Raise every sail and outrun him in these shallow channels.", next: "run_fail" },
+                    { text: "Surrender immediately and explain your academic purpose.", next: "run_fail" },
+                    { text: "Disguise your ship as a local fishing boat.", next: "fish_fail" }
+                ])
+            });
+
+            steps.push({
+                id: "caves",
+                icon: "🕯️",
+                title: "The Cave Labyrinth",
+                text: `Your diving bell slides through <em>black underwater caverns</em>. You reach a chamber with four tunnel openings. One has a faint ocean current pulling towards the main structure.`,
+                choices: shuffle([
+                    { text: "Follow the gentle ocean current.", next: "inner_chamber" },
+                    { text: "Steer into the glowing bioluminescent tube.", next: "caves_trap" },
+                    { text: "Anchor and inspect the rocky walls.", next: "caves_trap" },
+                    { text: "Vent air pressure and sink deeper.", next: "caves_trap" }
+                ])
+            });
+
+            steps.push({
+                id: "inner_chamber",
+                icon: "🏛️",
+                title: "The Temple Entrance",
+                text: `You successfully reach the dry inner sanctum. A ancient glowing tablet on the temple wall translates to: <br><strong style="color:var(--gold); font-size:15px;">"${clueText}"</strong><br> Before you stand four corridor choices, each sealed with a massive crystal portal.`,
+                choices: shuffle([
+                    { text: "Step into the Chamber of Fire.", next: correctCorridor === 'fire' ? 'win' : 'trap_fire' },
+                    { text: "Step into the Chamber of Water.", next: correctCorridor === 'water' ? 'win' : 'trap_water' },
+                    { text: "Step into the Chamber of Earth.", next: "trap_earth" },
+                    { text: "Step into the Chamber of Wind.", next: "trap_wind" }
+                ])
+            });
+
+            // Outcomes
+            steps.push({
+                id: "run_fail",
+                icon: "💀",
+                title: "Caught and Imprisoned",
+                text: "The patrol ship surrounds you. You spend months in the harbor prison.",
+                outcome: "lose", outcomeTitle: "Voyage Ended", outcomeText: "The Golden Compass remains lost."
+            });
+            steps.push({
+                id: "fish_fail",
+                icon: "💀",
+                title: "Disguise Blown",
+                text: "Your crude disguise fails immediately. You are hauled away in irons.",
+                outcome: "lose", outcomeTitle: "Voyage Ended", outcomeText: "Your crew is arrested."
+            });
+            steps.push({
+                id: "perimeter_fail",
+                icon: "💀",
+                title: "Swept by Waves",
+                text: "A giant rogue wave sweeps you off the coastal cliffs into the rocky deep.",
+                outcome: "lose", outcomeTitle: "Lost to the Sea", outcomeText: "The sea claimed you."
+            });
+            steps.push({
+                id: "tides_fail",
+                icon: "💀",
+                title: "Rivals Beat You",
+                text: "While you wait at the docks, a rival crew sails out and claims the relics first.",
+                outcome: "lose", outcomeTitle: "Too Slow", outcomeText: "The compass was taken."
+            });
+            steps.push({
+                id: "caves_trap",
+                icon: "💀",
+                title: "Cave Collapse",
+                text: "A tremor rattles the caverns, triggering a massive collapse of silt and rock.",
+                outcome: "lose", outcomeTitle: "Buried Alive", outcomeText: "The caverns collapsed."
+            });
+            steps.push({
+                id: "trap_fire",
+                icon: "💀",
+                title: "Incinerated!",
+                text: "You stepped into the Chamber of Fire, but the embers flared and filled the chamber with magma.",
+                outcome: "lose", outcomeTitle: "Swallowed by Flame", outcomeText: "The embers consumed you."
+            });
+            steps.push({
+                id: "trap_water",
+                icon: "💀",
+                title: "Drowned!",
+                text: "The Chamber of Water flooded instantly, sealing you in a pressurized tank.",
+                outcome: "lose", outcomeTitle: "Flooded", outcomeText: "The tides drowned your progress."
+            });
+            steps.push({
+                id: "trap_earth",
+                icon: "💀",
+                title: "Crushed by Rock!",
+                text: "Massive stone columns slide down from the ceiling, crushing the doorway.",
+                outcome: "lose", outcomeTitle: "Crushed", outcomeText: "The stone vault shut forever."
+            });
+            steps.push({
+                id: "trap_wind" ,
+                icon: "💀",
+                title: "Sucked Into the Void!",
+                text: "A powerful vacuum rips through the corridor, sucking you into a bottomless trench.",
+                outcome: "lose", outcomeTitle: "Sucked Into the Deep", outcomeText: "You fell into the dark."
+            });
+            steps.push({
+                id: "win",
+                icon: "🧭",
+                title: "The Golden Compass",
+                text: "The chosen door leads into a safe chamber. Resting on a pedestal of black coral, the <em>Golden Compass of Tides</em> spins flawlessly.",
+                outcome: "win", outcomeTitle: "Treasure Found!", outcomeText: "You successfully bypassed the ancient traps and claimed the legendary compass!"
+            });
+
+        } else if (chosenStory === "desert_sphinx") {
+            // Riddle pool
+            const riddles = [
+                { r: "I have cities but no houses. I have mountains but no trees. I have water but no fish. What am I?", a: "A Map", w: ["A Mirror", "A Desert", "A Painting"] },
+                { r: "I have no voice, yet I speak. I have no wings, yet I fly. What am I?", a: "The Wind", w: ["A Ghost", "A Shadow", "An Echo"] },
+                { r: "The more of me you take, the more you leave behind. What am I?", a: "Footsteps", w: ["Time", "Coins", "Memories"] },
+                { r: "Feed me and I live, give me a drink and I die. What am I?", a: "Fire", w: ["A Plant", "A Shadow", "An Engine"] }
+            ];
+            const riddle = riddles[Math.floor(Math.random() * riddles.length)];
+
+            steps.push({
+                id: "start",
+                icon: "🐪",
+                title: "The Caravan Whisper",
+                text: `At a dusty crossroads in the <em>Kha'aret Wastes</em>, a cartographer sells you a scroll containing the coordinates of the <em>Eye of Solara</em>. You must cross the wastes.`,
+                choices: shuffle([
+                    { text: "Cross by night along the mountain ridge.", next: "ridge" },
+                    { text: "Join a merchant merchant caravan.", next: "caravan" },
+                    { text: "Hire a local camel guide.", next: "ridge" },
+                    { text: "Set off directly through the dunes.", next: "desert_fail" }
+                ])
+            });
+
+            steps.push({
+                id: "ridge",
+                icon: "🌄",
+                title: "The Mountain Ridge",
+                text: `High up in the rocky pass, the trail splits into four ravines. A warning sign warns of bandit territories.`,
+                choices: shuffle([
+                    { text: "Take the east defile — it is wind-swept and rocky.", next: "sphinx_gate" },
+                    { text: "Descend into the valley floor path.", next: "bandit_fail" },
+                    { text: "Climb over the highest crest.", next: "fall_fail" },
+                    { text: "Follow the dry river bed.", next: "bandit_fail" }
+                ])
+            });
+
+            steps.push({
+                id: "caravan",
+                icon: "🏪",
+                title: "The Merchant Caravan",
+                text: `The caravan journeys through the sands. The caravan master says that sandstorms have shifted the dunes, revealing new tracks.`,
+                choices: shuffle([
+                    { text: "Stick to the northern merchant route.", next: "sphinx_gate" },
+                    { text: "Steer into the southern oasis canyon.", next: "oasis_fail" },
+                    { text: "Scout ahead on foot.", next: "oasis_fail" },
+                    { text: "Wait for the night stars to align.", next: "desert_fail" }
+                ])
+            });
+
+            // Sphinx puzzle
+            steps.push({
+                id: "sphinx_gate",
+                icon: "🗿",
+                title: "The Sphinx of Kha'aret",
+                text: `You stand before a colossal stone Sphinx. Its amber eyes ignite with flame as it bellows: <br><em style="color:var(--gold); font-size:15px;">"${riddle.r}"</em>`,
+                choices: shuffle([
+                    { text: `Answer: "${riddle.a}"`, next: "win" },
+                    { text: `Answer: "${riddle.w[0]}"`, next: "sphinx_fail" },
+                    { text: `Answer: "${riddle.w[1]}"`, next: "sphinx_fail" },
+                    { text: `Answer: "${riddle.w[2]}"`, next: "sphinx_fail" }
+                ])
+            });
+
+            // Outcomes
+            steps.push({
+                id: "desert_fail",
+                icon: "💀",
+                title: "Lost in the Dunes",
+                text: "The trackless dunes look identical. You wander in circles until dehydration claims you.",
+                outcome: "lose", outcomeTitle: "Lost to Wastes", outcomeText: "The desert claimed another soul."
+            });
+            steps.push({
+                id: "bandit_fail",
+                icon: "💀",
+                title: "Ambushed",
+                text: "Rogue bandits surround you, stealing your map, coordinates, and supplies.",
+                outcome: "lose", outcomeTitle: "Raid Ended", outcomeText: "You return to town empty-handed."
+            });
+            steps.push({
+                id: "fall_fail",
+                icon: "💀",
+                title: "Fatal Slip",
+                text: "A loose ledge crumbles, sending you tumbling down the gorge.",
+                outcome: "lose", outcomeTitle: "Fatal Fall", outcomeText: "The mountain pass was too steep."
+            });
+            steps.push({
+                id: "oasis_fail",
+                icon: "💀",
+                title: "Sinking Sand",
+                text: "The promising oasis canyon is actually a massive bed of deep quicksand.",
+                outcome: "lose", outcomeTitle: "Swallowed Alive", outcomeText: "The quicksand swallowed you."
+            });
+            steps.push({
+                id: "sphinx_fail",
+                icon: "💀",
+                title: "Wrong Answer",
+                text: `The Sphinx growls. Its paws slam down, crushing your exit and causing the cavern to cave in.`,
+                outcome: "lose", outcomeTitle: "Sphinx's Judgment", outcomeText: "You failed the riddle."
+            });
+            steps.push({
+                id: "win",
+                icon: "💎",
+                title: "The Eye of Solara",
+                text: `The Sphinx moves its stone paw, revealing a hidden stairwell. Inside, the brilliant <em>Eye of Solara</em> ruby glows in the dark.`,
+                outcome: "win", outcomeTitle: "Treasure Found!", outcomeText: "The ruby is yours. Your vision of the future is clear."
+            });
+
+        } else if (chosenStory === "haunted_lighthouse") {
+            // Combination digit randomizer
+            const correctDigit = Math.floor(Math.random() * 4) + 3; // 3 to 6
+            const distractors = [3, 4, 5, 6].filter(d => d !== correctDigit);
+
+            steps.push({
+                id: "start",
+                icon: "🔑",
+                title: "The Storm Letter",
+                text: `A letter arrives detailing the decommissioned lighthouse of Cape Morrath. Inside, a secret vault holds the <em>Clockwork Crown</em>. The letter states you must find the combination written in the keeper's log.`,
+                choices: shuffle([
+                    { text: "Travel alone immediately through the storm.", next: "storm" },
+                    { text: "Wait for the storm to clear and hire a locksmith companion.", next: "locksmith" },
+                    { text: "Sneak into the lighthouse boat house.", next: "drown_fail" },
+                    { text: "Examine the cliffs for a side cave entry.", next: "cliff_fail" }
+                ])
+            });
+
+            steps.push({
+                id: "storm",
+                icon: "⛈️",
+                title: "Into the Storm",
+                text: `The gale is furious. Inside the lighthouse lobby, you discover the keeper's old logbook. A red-circled entry reads: <br><strong style="color:var(--gold); font-size:15px;">"The vault frequency is set to the Duchess's safety channel: ${correctDigit} Megahertz."</strong>`,
+                choices: shuffle([
+                    { text: "Descend into the spiral cellar towards the vault.", next: "vault_room" },
+                    { text: "Go up to the lantern room to inspect the lens.", next: "ghost_fail" },
+                    { text: "Wait in the lobby until morning.", next: "rival_fail" },
+                    { text: "Search the kitchen drawers for tools.", next: "vault_room" }
+                ])
+            });
+
+            steps.push({
+                id: "locksmith",
+                icon: "🔑",
+                title: "The Locksmith companion",
+                text: `You arrive with your locksmith companion. She inspects the front logs and notes: <br><strong style="color:var(--gold); font-size:15px;">"The Duchess's safety frequency is marked at ${correctDigit} Megahertz."</strong>`,
+                choices: shuffle([
+                    { text: "Have her lead you to the vault dial.", next: "vault_room" },
+                    { text: "Try to pick the back door locks first.", next: "trap_door_fail" },
+                    { text: "Explore the boiler room.", next: "trap_door_fail" },
+                    { text: "Search the upper bedrooms.", next: "ghost_fail" }
+                ])
+            });
+
+            steps.push({
+                id: "vault_room",
+                icon: "🔒",
+                title: "The Morrath Vault",
+                text: `You stand before the heavy copper safe. The dial must be tuned to the correct Megahertz frequency.`,
+                choices: shuffle([
+                    { text: `Tune the dial to ${correctDigit} Megahertz.`, next: "win" },
+                    { text: `Tune the dial to ${distractors[0]} Megahertz.`, next: "vault_trap" },
+                    { text: `Tune the dial to ${distractors[1]} Megahertz.`, next: "vault_trap" },
+                    { text: `Tune the dial to ${distractors[2]} Megahertz.`, next: "vault_trap" }
+                ])
+            });
+
+            // Outcomes
+            steps.push({
+                id: "drown_fail",
+                icon: "💀",
+                title: "Swept Out to Sea",
+                text: "The boathouse doors give way under the storm tide. You are dragged into the surf.",
+                outcome: "lose", outcomeTitle: "Drowned", outcomeText: "The sea claimed another seeker."
+            });
+            steps.push({
+                id: "cliff_fail",
+                icon: "💀",
+                title: "Cliffs Crumble",
+                text: "The muddy cliff path collapses under your feet. You fall into the black breakers.",
+                outcome: "lose", outcomeTitle: "Fatal Fall", outcomeText: "The cliffs were too unstable."
+            });
+            steps.push({
+                id: "ghost_fail",
+                icon: "💀",
+                title: "The Phantom Guard",
+                text: "A ghost keeper appears on the spiral stairs, striking fear into your heart. You flee, falling down the stairs.",
+                outcome: "lose", outcomeTitle: "Scared to Death", outcomeText: "The phantom guard drove you out."
+            });
+            steps.push({
+                id: "rival_fail",
+                icon: "💀",
+                title: "Rivals Slip In",
+                text: "While you wait in the lobby, a rival team enters from the side cellar and takes the crown.",
+                outcome: "lose", outcomeTitle: "Outsmarted", outcomeText: "You lost the initiative."
+            });
+            steps.push({
+                id: "trap_door_fail",
+                icon: "💀",
+                title: "False Floor Triggered",
+                text: "A loose floorboard gives way, plunging you both into a flooded boiler tank.",
+                outcome: "lose", outcomeTitle: "Trapped Below", outcomeText: "You fell into a water trap."
+            });
+            steps.push({
+                id: "vault_trap",
+                icon: "💀",
+                title: "Security Lockout",
+                text: "Tuning to the wrong frequency trips the counterweights. Iron bars lock the door, and toxic steam vents in.",
+                outcome: "lose", outcomeTitle: "Security Trap", outcomeText: "The vault locked down permanently."
+            });
+            steps.push({
+                id: "win",
+                icon: "👑",
+                title: "The Clockwork Crown",
+                text: "The vault door clicks open. Inside, the breathtaking <em>Clockwork Crown</em> ticks perfectly, glittering with diamonds.",
+                outcome: "win", outcomeTitle: "Treasure Found!", outcomeText: "You successfully unlocked the Duchess's vault and claimed the prize!"
+            });
+
+        } else if (chosenStory === "forest_dragon") {
+            // Dragon sensitivity randomizer
+            const sensitivities = [
+                { s: "lighting bright torches", key: "torches", text: "Light a bright copper torch to inspect the nest.", badText: "The harsh glare of the torch hits Mosscoil's eyes. He wakes instantly!" },
+                { s: "making noise on dry leaves", key: "leaves", text: "Step carefully across the dry leaf carpet.", badText: "The loud crunching sound of the dried leaves echoes in the cave. Mosscoil wakes instantly!" },
+                { s: "carrying pine wood branches", key: "pine", text: "Carry a fragrant pine branch as camouflage.", badText: "The strong aroma of the pine branch alerts the dragon's nose. Mosscoil wakes instantly!" },
+                { s: "burning small campfire twigs", key: "smoke", text: "Burn some small twigs to create a smoke screen.", badText: "The smoke catches in Mosscoil's nostrils. He sneezes, wakes up, and burns the cavern!" }
+            ];
+            const chosenSens = sensitivities[Math.floor(Math.random() * sensitivities.length)];
+            
+            // Generate choices mapping for the grove
+            const groveChoices = sensitivities.map(item => {
+                const isTrap = item.key === chosenSens.key;
+                return {
+                    text: item.text,
+                    next: isTrap ? "trap_wake" : "win"
+                };
+            });
+
+            steps.push({
+                id: "start",
+                icon: "🌲",
+                title: "The Ranger's Warning",
+                text: `At the edge of the Vethara Wood, a ranger stops you. <br><strong style="color:var(--gold);">"Turn back! The dragon Mosscoil is asleep, but he is sensitive. Whatever you do, avoid ${chosenSens.s}!"</strong>`,
+                choices: shuffle([
+                    { text: "Detour through the damp fungal marshes.", next: "grove_approach" },
+                    { text: "Cut straight through the main thicket.", next: "direct_encounter" },
+                    { text: "Follow the ranger's old supply path.", next: "grove_approach" },
+                    { text: "Wait until the moon sets.", next: "wait_fail" }
+                ])
+            });
+
+            steps.push({
+                id: "direct_encounter",
+                icon: "🐉",
+                title: "Face to Face",
+                text: "You stumble right into the deep grove. Giant green scales litter the ground. The sleeping dragon breathes slowly nearby.",
+                choices: shuffle([
+                    { text: "Back away silently to find the marsh route.", next: "grove_approach" },
+                    { text: "Stand completely still and wait.", next: "stand_fail" },
+                    { text: "Try to steal the stone directly.", next: "stand_fail" },
+                    { text: "Throw a stone to distract him.", next: "stand_fail" }
+                ])
+            });
+
+            steps.push({
+                id: "grove_approach",
+                icon: "🌿",
+                title: "Mosscoil's Clearing",
+                text: "You successfully reach the edge of the dragon's nest. The glowing <em>Ember Stone</em> sits nestled in roots, just yards from the dragon's head. How do you move in?",
+                choices: shuffle(groveChoices)
+            });
+
+            // Outcomes
+            steps.push({
+                id: "wait_fail",
+                icon: "💀",
+                title: "Marsh Fog",
+                text: "While you wait, a thick poisonous swamp gas rolls in, forcing you to retreat.",
+                outcome: "lose", outcomeTitle: "Poisoned", outcomeText: "The forest drove you out."
+            });
+            steps.push({
+                id: "stand_fail",
+                icon: "💀",
+                title: "Mosscoil Alerted",
+                text: "Your scent is caught in the breeze. The dragon wakes with a massive roar, breathing white-hot fire.",
+                outcome: "lose", outcomeTitle: "Scorched", outcomeText: "You barely escaped with your life."
+            });
+            steps.push({
+                id: "trap_wake",
+                icon: "💀",
+                title: "Dragon Woken!",
+                text: chosenSens.badText,
+                outcome: "lose", outcomeTitle: "Incinerated", outcomeText: "You triggered the dragon's alarm."
+            });
+            steps.push({
+                id: "win",
+                icon: "🪨",
+                title: "The Ember Stone",
+                text: "You slip past without making a sound or scent that alerts the dragon. You lift the warm <em>Ember Stone</em> and walk out into the sunlight.",
+                outcome: "win", outcomeTitle: "Treasure Found!", outcomeText: "You successfully stole the dragon's egg!"
+            });
+        }
+
+        currentAdventure = {
+            id: chosenStory,
+            tag: `Adventure — ${chosenStory.replace('_', ' ').toUpperCase()}`,
+            steps: steps
+        };
+    }
+
+    function startNewAdventure() {
+      window.gameHub.playClick();
+      generateDynamicAdventure();
+      
+      stepsCompleted = 0;
+      lastStepId = null;
+      playerHasShield = DIFFICULTY_CONFIG.hasShield;
+      
+      // Dynamically apply adventure color themes
+      applyAdventureTheme(currentAdventure.id);
+
+      renderStep('start');
+    }
+
+    function makeChoice(nextId, currentId) {
+      window.gameHub.playClick();
+      lastStepId = currentId; // save backtracking point
+      stepsCompleted = Math.min(stepsCompleted + 1, TOTAL_PIPS);
+      renderStep(nextId);
+    }
+
+    function buildPips(done, active, total) {
+      let html = '';
+      for (let i = 0; i < total; i++) {
+        let cls = 'pip';
+        if (i < done) cls += ' done';
+        else if (i === done && active) cls += ' active';
+        html += `<div class="${cls}"></div>`;
+      }
+      return html;
+    }
+
+    function triggerShieldRescue() {
+        window.gameHub.playTone(450, 0.4, 'triangle', 0.1); // fail buffer alarm
+        playerHasShield = false;
+        stepsCompleted = Math.max(0, stepsCompleted - 1);
+        
+        const el = document.getElementById('game-inner');
+        const pips = buildPips(stepsCompleted, true, TOTAL_PIPS);
+        const header = `
+          <div class="card-header">
+            <span class="game-title-sm">⚔ Treasure Hunt</span>
+            <div class="header-right">
+              <span class="adv-tag">${currentAdventure.tag}</span>
+              <span class="shield-badge broken">🛡️ Shield Broken</span>
+            </div>
+          </div>
+          <div class="progress-bar">${pips}</div>
+        `;
+
+        el.innerHTML = header + `
+          <div class="scene-wrap">
+            <div class="scene-icon">🛡️⚡</div>
+            <div class="scene-title" style="color: var(--neon-red);">Shield Consumed!</div>
+            <p class="scene-text" style="font-weight: 500;">
+                The trap triggered, but your **Arcade Shield** absorbed the crushing force! The shield shattered, but you successfully backtracked to safety.
+            </p>
+            <div class="choices">
+                <button class="choice-btn" onclick="renderStep('${lastStepId}')">
+                    <span class="choice-letter">↩</span>
+                    <span>Return to Safety</span>
+                </button>
+            </div>
+          </div>
+        `;
+    }
+
+    function getStep(adv, id) {
+      if (id === null || id === 'start') return adv.steps[0];
+      return adv.steps.find(s => s.id === id) || adv.steps[0];
+    }
+
+    function renderStep(stepId) {
+      const adv = currentAdventure;
+      const step = getStep(adv, stepId);
+      const el = document.getElementById('game-inner');
+
+      const pips = buildPips(stepsCompleted, true, TOTAL_PIPS);
+      
+      // Shield Badge html
+      let shieldHtml = '';
+      if (DIFFICULTY_CONFIG.hasShield) {
+          shieldHtml = playerHasShield 
+              ? `<span class="shield-badge">🛡️ Shield Active</span>` 
+              : `<span class="shield-badge broken">🛡️ Shield Broken</span>`;
+      }
+
+      const header = `
+        <div class="card-header">
+          <span class="game-title-sm">⚔ Treasure Hunt</span>
+          <div class="header-right">
+            <span class="adv-tag">${adv.tag}</span>
+            ${shieldHtml}
+            <button class="new-btn" onclick="startNewAdventure()">↺ New Story</button>
+          </div>
+        </div>
+        <div class="progress-bar">${pips}</div>
+      `;
+
+      // Trap checking for Shield Trigger
+      if (step.outcome && step.outcome === 'lose' && playerHasShield) {
+          triggerShieldRescue();
+          return;
+      }
+
+      if (step.outcome) {
+        const isWin = step.outcome === 'win';
+        
+        let coinsEarned = 0;
+        if (isWin) {
+            coinsEarned = DIFFICULTY_CONFIG.baseCoins;
+            window.gameHub.recordWin('treasure', coinsEarned);
+            window.gameHub.playWin();
+        } else {
+            window.gameHub.recordLoss();
+            window.gameHub.playTone(200, 0.4, 'sawtooth', 0.12);
+        }
+
+        el.innerHTML = header + `
+          <div class="scene-wrap">
+            <div class="scene-icon">${step.icon}</div>
+            <div class="scene-title">${step.title}</div>
+            <p class="scene-text">${step.text}</p>
+            <div class="outcome-wrap ${isWin ? 'win' : 'lose'}">
+              <div class="outcome-icon">${isWin ? '🏆' : '☠️'}</div>
+              <div class="outcome-title">${step.outcomeTitle}</div>
+              ${isWin ? `<div class="reward-payout-text">+${coinsEarned} Coins Claimed!</div>` : ''}
+              <p class="outcome-text">${step.outcomeText}</p>
+              <button class="outcome-btn" onclick="startNewAdventure()">
+                ${isWin ? '✦ New Adventure ✦' : '↩ Try Again'}
+              </button>
+            </div>
+            <hr class="divider" />
+          </div>
+        `;
+        return;
+      }
+
+      const choicesHtml = step.choices.map((c, i) => `
+        <button class="choice-btn" onclick="makeChoice('${c.next}', '${step.id}')">
+          <span class="choice-letter">${LETTERS[i]}.</span>
+          <span>${c.text}</span>
+        </button>
+      `).join('');
+
+      el.innerHTML = header + `
+        <div class="scene-wrap">
+          <div class="scene-icon">${step.icon}</div>
+          <div class="scene-title">${step.title}</div>
+          <p class="scene-text">${step.text}</p>
+          <div class="choices">${choicesHtml}</div>
+        </div>
+      `;
+    }
+
+    // Start on load
+    startNewAdventure();
+  </script>
+</body>
+</html>
